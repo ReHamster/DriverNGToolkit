@@ -92,45 +92,46 @@ namespace DriverNG
 		bool textChanged = false;
 
 		// command history
-		if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow), true))
+		if (m_execHistory.size())
 		{
-			if (m_execHistoryIndex == -1)
+			if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow), true))
 			{
-				m_execHistoryIndex = m_execHistory.size();
-			}
-
-			if (m_execHistoryIndex != -1)
-			{
-				int newIndex = --m_execHistoryIndex;
-
-				if (m_execHistoryIndex < 0)
+				if (m_execHistoryIndex == -1)
 				{
-					m_execHistoryIndex = 0;
-					newIndex = 0;
+					m_execHistoryIndex = m_execHistory.size();
 				}
 
-				//strcpy_s(m_Command, m_execHistory[newIndex].c_str());
-				//textChanged = true;
-				std::strncpy(m_Command, m_execHistory[newIndex].c_str(), sizeof(m_Command) - 1);
-				m_focusConsoleInput = true;
-				textChanged = true;
-			}
-		}
-		else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow), true))
-		{
-			if (m_execHistoryIndex != -1)
-			{
-				int newIndex = ++m_execHistoryIndex;
-
-				if (m_execHistoryIndex >= m_execHistory.size())
+				if (m_execHistoryIndex != -1)
 				{
-					m_execHistoryIndex = m_execHistory.size() - 1;
-					newIndex = m_execHistoryIndex;
-				}
+					int newIndex = --m_execHistoryIndex;
 
-				std::strncpy(m_Command, m_execHistory[newIndex].c_str(), sizeof(m_Command) - 1);
-				m_focusConsoleInput = true;
-				textChanged = true;
+					if (m_execHistoryIndex < 0)
+					{
+						m_execHistoryIndex = 0;
+						newIndex = 0;
+					}
+
+					std::strncpy(m_Command, m_execHistory[newIndex].c_str(), sizeof(m_Command) - 1);
+					m_focusConsoleInput = true;
+					textChanged = true;
+				}
+			}
+			else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow), true))
+			{
+				if (m_execHistoryIndex != -1)
+				{
+					int newIndex = ++m_execHistoryIndex;
+
+					if (m_execHistoryIndex >= m_execHistory.size())
+					{
+						m_execHistoryIndex = m_execHistory.size() - 1;
+						newIndex = m_execHistoryIndex;
+					}
+
+					std::strncpy(m_Command, m_execHistory[newIndex].c_str(), sizeof(m_Command) - 1);
+					m_focusConsoleInput = true;
+					textChanged = true;
+				}
 			}
 		}
 

@@ -17,6 +17,9 @@ namespace DriverNG
         char m_luaCommandStr[4096];
 
     public:
+        DebugTools();
+
+        WidgetID ToolbarWidget();
         void Update() override;
         void OnEnable();
         void OnDisable();
@@ -29,6 +32,7 @@ namespace DriverNG
     private:
         void DrawTopMenu();
 
+        WidgetID m_activeWidgetID{ WidgetID::CONSOLE };
         Console m_console;
     };
 }
