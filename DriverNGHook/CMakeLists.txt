@@ -16,8 +16,8 @@ add_subdirectory(Modules/sol2)
 # add_subdirectory(Hamster)
 
 add_subdirectory(DriverNG)
-add_subdirectory(Launcher)
 add_subdirectory(Client)
+# add_subdirectory(Launcher)
 
 file(GLOB_RECURSE REHITMAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/DLL/source/*.cpp)
 
@@ -30,3 +30,4 @@ target_link_libraries(DriverNGHook PUBLIC DriverNGHook::IClient spdlog fmt::fmt)
 target_link_libraries(DriverNGHook PRIVATE DriverNG ImGui::Core ImGui::DX9)
 
 target_compile_definitions(DriverNGHook PRIVATE)
+set_target_properties(DriverNGHook PROPERTIES SUFFIX ".asi")

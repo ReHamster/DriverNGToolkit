@@ -1,12 +1,13 @@
 #pragma once
 
-#include <UI/DebugWidget.h>
+#include <UI/Widget.h>
+#include <UI/ConsoleWidget.h>
 #include <vector>
 #include <string>
 
 namespace DriverNG
 {
-    class DebugTools : public DebugWidget
+    class DebugTools : public Widget
     {
     private:
         bool m_bIsVisible { false };
@@ -15,18 +16,19 @@ namespace DriverNG
         bool m_bIsTitleVisible{ true };
         char m_luaCommandStr[4096];
 
-        std::vector<std::string> m_execHistory;
-        int m_execHistoryIndex;
-
     public:
-        void draw() override;
-        void toggleVisibility();
-        [[nodiscard]] bool isVisible() const;
+        void Update() override;
+        void OnEnable();
+        void OnDisable();
+
+        void ToggleVisibility();
+        [[nodiscard]] bool IsVisible() const;
+
+        void LogGameToConsole(const std::string& acpText);
 
     private:
-        void onPreDraw();
-        void onPostDraw();
+        void DrawTopMenu();
 
-        void drawTopMenu();
+        Console m_console;
     };
 }

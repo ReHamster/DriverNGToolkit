@@ -48,9 +48,9 @@ namespace DriverNG
 
         if (Globals::g_pDebugTools)
         {
-            const bool isDebugToolsVisible = Globals::g_pDebugTools->isVisible();
+            const bool isDebugToolsVisible = Globals::g_pDebugTools->IsVisible();
 
-			Globals::g_pDebugTools->draw();
+			Globals::g_pDebugTools->Update();
 
             ImGuiIO& io = ImGui::GetIO();
             io.MouseDrawCursor = isDebugToolsVisible;

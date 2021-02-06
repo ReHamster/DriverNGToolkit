@@ -1,9 +1,9 @@
 #include <Windows.h>
 #include <Delegates/LuaDelegate.h>
 #include <spdlog/spdlog.h>
-
-#define WORK_PENDING_MARKER 0x1d1d0001
-
+#include <UI/DebugTools.h>
+#include <imgui.h>
+#include <sol_imgui/sol_imgui.h>
 
 class LuaAsyncQueue
 {
@@ -24,12 +24,10 @@ protected:
 		work_t(std::function<int()> f, uint32_t id)
 		{
 			func = f;
-			result = WORK_PENDING_MARKER;
 			workId = id;
 		}
 
 		std::function<int()> func;
-		volatile int result;
 		uint32_t workId;
 	};
 
@@ -64,11 +62,8 @@ int LuaAsyncQueue::Run()
 
 			for (auto const& work : m_pendingWork)
 			{
-				if (work->result == WORK_PENDING_MARKER)
-				{
-					currentWork = work;
-					break;
-				}
+				currentWork = work;
+				break;
 			}
 
 			// no work and haven't picked one?
@@ -78,18 +73,18 @@ int LuaAsyncQueue::Run()
 
 		if (currentWork)
 		{
-			std::lock_guard<std::mutex> lock(m_workMutex);
-			
-			// get and quickly dispose
 			work_t* cur = currentWork;
+			{
+				std::lock_guard<std::mutex> lock(m_workMutex);
+				m_pendingWork.remove(cur);
+			}
+
+			// get and quickly dispose
 			currentWork = nullptr;
 
 			// run work
-			int result = cur->func();
-
-			cur->result = result;
-
-			m_pendingWork.remove(cur);
+			cur->func();
+			delete cur;
 		}
 	}
 
@@ -98,8 +93,15 @@ int LuaAsyncQueue::Run()
 
 LuaAsyncQueue g_luaAsyncQueue;
 
+//----------------------------------------------------------------------
+
 namespace DriverNG
 {	
+	namespace Globals
+	{
+		extern std::unique_ptr<DebugTools> g_pDebugTools;
+	}
+
     ILuaDelegate& ILuaDelegate::GetInstance()
     {
         static LuaDelegate* instance = nullptr;
@@ -113,20 +115,14 @@ namespace DriverNG
 	
     void LuaDelegate::OnInitialised(CallLuaFunction_t callFunc)
 	{
+		m_lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
+		sol_ImGui::InitBindings(m_lua);
+
         m_callLuaFunc = callFunc;
 
     	// init Lua hooks
     	if(m_callLuaFunc)
             m_callLuaFunc("driverNGHook_Init", ">");
-
-
-		/*
-		char* test = nullptr;
-		callLuaFunction("driverNGHook_test", ">s", &test);
-
-		spdlog::info("Lua test: {}", test);
-		*/
-		//callLuaFunction("driverNGHook_EvalHelper", "s", "printffffs(\"----------THIS IS A TEST EVALUATED MESSAGE FROM HOOK----------\" )");
     }
 	
     void LuaDelegate::DoCommands()
@@ -150,8 +146,11 @@ namespace DriverNG
     	{
             m_callLuaFunc("driverNGHook_LogPopNext", ">is", &numLogItems, &pString);
     		
-    		if(numLogItems && pString)
-                printf("%s\n", pString);
+			if (numLogItems && pString)
+			{
+				//     printf("%s\n", pString);
+				Globals::g_pDebugTools->LogGameToConsole(pString);
+			}
 
         } while (numLogItems);
 

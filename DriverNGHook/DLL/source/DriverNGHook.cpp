@@ -47,7 +47,7 @@ namespace ReHamster
 
 	int Core::EntryPoint(const void*)
 	{
-		ReHamster::DebugConsole::Create("DriverNG Hook | Developer Console");
+		//ReHamster::DebugConsole::Create("DriverNG Hook | Developer Console");
 		ReHamster::Logger::Setup();
 
 		CrashHandlerReporter crashHandlerReporter;

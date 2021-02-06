@@ -20,7 +20,7 @@ namespace DriverNG
     {
         if (keyCode == VK_F3 && !state && Globals::g_pDebugTools)
         {
-            Globals::g_pDebugTools->toggleVisibility();
+            Globals::g_pDebugTools->ToggleVisibility();
         }
     }
 
@@ -44,7 +44,7 @@ namespace DriverNG
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 
     	if(Globals::g_pDebugTools)
-            return !Globals::g_pDebugTools->isVisible();
+            return !Globals::g_pDebugTools->IsVisible();
     
         return true;
     }

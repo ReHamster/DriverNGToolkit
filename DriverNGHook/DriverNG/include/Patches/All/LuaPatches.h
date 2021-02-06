@@ -10,11 +10,11 @@ namespace DriverNG
 
     class LuaPatches final : public BasicPatch
     {
-        static constexpr size_t kStartLuaPatchSize = 5;
-        static constexpr size_t kriLuaCallPatchSize = 5;
+        static constexpr size_t kOpenScriptLoaderPatchSize = 5;
+        static constexpr size_t kStepLuaPatchSize = 5;
 
-        HF::Hook::TrampolinePtr<kStartLuaPatchSize> m_startLuaHook;
-        HF::Hook::TrampolinePtr<kriLuaCallPatchSize> m_riLuaCallHook;
+        HF::Hook::TrampolinePtr<kOpenScriptLoaderPatchSize> m_openScriptLoaderHook;
+        HF::Hook::TrampolinePtr<kStepLuaPatchSize> m_stepLuaHook;
     public:
         LuaPatches() = default;
 

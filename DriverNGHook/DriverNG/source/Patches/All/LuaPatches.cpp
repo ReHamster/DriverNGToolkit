@@ -10,11 +10,16 @@ namespace DriverNG
 {
     namespace Consts
     {
-        static constexpr intptr_t kriLuaCallAddress         = 0x005E48E5;
-        static constexpr intptr_t kriLuaCallOrigAddress     = 0x005F1CA0;
-        static constexpr intptr_t kCallLuaFunctionAddress   = 0x005E47A0;
-        static constexpr intptr_t kStartLuaCallAddress      = 0x005E7E35;     // to the call CState_Frontend_Loading::Step
-        static constexpr intptr_t kStartLuaOrigAddress      = 0x005E4C70;
+        static constexpr uintptr_t kCallLuaFunctionAddress  = 0x005E47A0;
+
+        static constexpr uintptr_t kOpenScriptLoaderCallAddr = 0x005E7E04;
+        static constexpr uintptr_t kOpenScriptLoaderOrigAddr = 0x0065A810;
+
+        //static constexpr uintptr_t kStartLuaCallAddress     = 0x005E7E35;     // to the call CState_Frontend_Loading::Step
+        //static constexpr uintptr_t kStartLuaOrigAddress     = 0x005E4C70;
+
+        static constexpr uintptr_t kStepLuaCallAddress     = 0x0079B811;     // to the call CState_Main::Step
+        static constexpr uintptr_t kStepLuaOrigAddress     = 0x005E4A70;
     }
 
     namespace Globals
@@ -35,33 +40,34 @@ namespace DriverNG
 
     namespace Callbacks
     {
-        int riLuaCall_Hooked(lua_State* L, int nargs, int nresults, bool protect)
+        void OpenScriptLoader_Hooked(lua_State* state)
         {
-            typedef int(* riLuaCall_t)(lua_State*, int, int, bool);
+            typedef void (*OpenScriptLoader)(lua_State*);
+            auto origOpenScriptLoader = (OpenScriptLoader)Consts::kOpenScriptLoaderOrigAddr;
 
-            auto riLuaCallOrig = (riLuaCall_t)Consts::kriLuaCallOrigAddress;
-            int result = riLuaCallOrig(L, nargs, nresults, protect);
+            // make game open chunk file
+            origOpenScriptLoader(state);
 
-            // call console commands
-        	//Globals::g_luaDelegate.DoCommands();
-        	
-            return result;
+            // we do our own Lua initialization
+            auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
+
+            // then make to our bindings
+            // make game exec our file
+            callLuaFunction("dofile", "s", "plugins/DriverNGHook/scripts/game_autoexec.lua");
+
+            // get the lua state from the address
+            Globals::InitializeLuaStateBindings(state);
         }
-    	
-        void StartLua_Hooked(lua_State* state)
+
+        void StepLua_Hooked(lua_State* state, bool paused)
         {
-            typedef void (* StartLua_t)(lua_State*);
-            auto origStartLua = (StartLua_t)Consts::kStartLuaOrigAddress;
+            typedef void (*StepLua_t)(lua_State*, bool);
+            auto origStepLua = (StepLua_t)Consts::kStepLuaOrigAddress;
 
-        	// make game bind it's bindings
-            origStartLua(state);
+            origStepLua(state, paused);
 
-        	// then hook to our bindings
-        	if(Globals::g_gameLuaState != state)
-        	{
-                // get the lua state from the address
-                Globals::InitializeLuaStateBindings(state);
-        	}
+            // do commands after
+            Globals::g_luaDelegate.DoCommands();
         }
     }
 
@@ -72,42 +78,42 @@ namespace DriverNG
         if (auto process = modules.process.lock())
 		{
 	        // Do not revert this patch!
-	        if (!HF::Hook::FillMemoryByNOPs(process, Consts::kStartLuaCallAddress, kStartLuaPatchSize))
+	        if (!HF::Hook::FillMemoryByNOPs(process, Consts::kOpenScriptLoaderCallAddr, kOpenScriptLoaderPatchSize))
 	        {
 	        	spdlog::error("Failed to cleanup memory");
 	        	return false;
 	        }
 
-	        m_startLuaHook = HF::Hook::HookFunction<void(*)(lua_State*), kStartLuaPatchSize>(
+	        m_openScriptLoaderHook = HF::Hook::HookFunction<void(*)(lua_State*), kOpenScriptLoaderPatchSize>(
                 process,
-                Consts::kStartLuaCallAddress,
-                &Callbacks::StartLua_Hooked,
+                Consts::kOpenScriptLoaderCallAddr,
+                &Callbacks::OpenScriptLoader_Hooked,
                 {},
                 {});
 
-	        if (!m_startLuaHook->setup())
+	        if (!m_openScriptLoaderHook->setup())
 	        {
-	        	spdlog::error("Failed to setup patch to StartLua!");
+	        	spdlog::error("Failed to setup patch to OpenScriptLoader!");
 	        	return false;
 	        }
 
             // Do not revert this patch!
-            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kriLuaCallAddress, kriLuaCallPatchSize))
+            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kStepLuaCallAddress, kStepLuaPatchSize))
             {
                 spdlog::error("Failed to cleanup memory");
                 return false;
             }
 
-            m_riLuaCallHook = HF::Hook::HookFunction<int(*)(lua_State*, int, int, bool), kriLuaCallPatchSize>(
+            m_stepLuaHook = HF::Hook::HookFunction<void(*)(lua_State*, bool), kStepLuaPatchSize>(
                 process,
-                Consts::kriLuaCallAddress,
-                &Callbacks::riLuaCall_Hooked,
+                Consts::kStepLuaCallAddress,
+                &Callbacks::StepLua_Hooked,
                 {},
                 {});
 
-            if (!m_riLuaCallHook->setup())
+            if (!m_stepLuaHook->setup())
             {
-                spdlog::error("Failed to setup patch to riLuaCall!");
+                spdlog::error("Failed to setup patch to StepLua!");
                 return false;
             }
 
@@ -121,6 +127,7 @@ namespace DriverNG
     {
         BasicPatch::Revert(modules);
 
-        m_startLuaHook->remove();
+        m_openScriptLoaderHook->remove();
+        m_stepLuaHook->remove();
     }
 }

@@ -80,7 +80,7 @@ void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
     MessageBox(
             NULL,
             "We got an fatal error.\nMinidump will be saved near exe.\nMore details in dev console.",
-            "Hitman Blood Money | ReGlacier",
+            "Driver San Francisco | DriverNGHook",
             MB_ICONERROR | MB_OK
     );
 

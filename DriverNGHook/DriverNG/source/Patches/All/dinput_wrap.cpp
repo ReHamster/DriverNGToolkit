@@ -38,8 +38,6 @@ HRESULT _stdcall WrapDirectInputDevice::GetDeviceData(DWORD cbObjectData, DIDEVI
 	if (rgdod == NULL || hr != DI_OK)
 		return hr;
 
-	Globals::g_luaDelegate.DoCommands();
-	
 	if(!m_enabled)
 	{
 		if (m_devguid == GUID_SysKeyboard)

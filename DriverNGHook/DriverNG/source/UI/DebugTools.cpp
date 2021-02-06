@@ -1,10 +1,9 @@
 #include <UI/DebugTools.h>
+#include <UI/Widget.h>
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>
 #include <string>
-
-// Widgets
 #include <Delegates/ILuaDelegate.h>
 
 namespace DriverNG
@@ -12,21 +11,12 @@ namespace DriverNG
     namespace Internals
     {
         static ILuaDelegate& g_luaDelegate = ILuaDelegate::GetInstance();
-    	
-        static void QuitGame()
-        {
-            auto callLuaFunction = Internals::g_luaDelegate.GetCallLuaFunction();
-
-            Internals::g_luaDelegate.Push([=]() {
-                callLuaFunction("driverNGHook_QuitGame", ">");
-                return 0;
-            });
-        }
     }
 
-    void DebugTools::draw()
+    void DebugTools::Update()
     {
-        auto callLuaFunction = Internals::g_luaDelegate.GetCallLuaFunction();
+        /*
+        
     	
     	if(m_bIsTitleVisible)
     	{
@@ -36,7 +26,7 @@ namespace DriverNG
     		
 	            ImGui::SetWindowPos(ImVec2(0, 0));
 	            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.25f, 1.0f), "DriverNG Hook / Tools by SoapyMan");
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.5f), "Alpha 0.2c");
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.5f), "Alpha 0.3a");
 
     			if(callLuaFunction)
 					ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "Press F3 to toggle menu");
@@ -44,10 +34,12 @@ namespace DriverNG
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "--- Please wait ---");
             ImGui::End();
     	}
-    	
+    	*/
+
+        auto callLuaFunction = Internals::g_luaDelegate.GetCallLuaFunction();
         if (!callLuaFunction)
             return;
-    	
+    	/*
         // pause the game
         int enablePause = m_bPauseEnabled && m_bIsVisible;
 
@@ -60,41 +52,77 @@ namespace DriverNG
         	
             m_bPauseIsOn = enablePause;
         }
-    	
+    	*/
         if (!m_bIsVisible)
             return;
+       
+        if (ImGui::Begin("Driver NG Tools"))
+        {
+            const ImVec2 zeroVec = { 0, 0 };
 
-        // TODO: On pre draw
-        onPreDraw();
-        DebugWidget::draw();
-        onPostDraw();
+            //if (!m_options.IsFirstLaunch)
+            {
+                //const DriverNG::WidgetID selectedID = HelperWidgets::ToolbarWidget();
+                //if (selectedID < WidgetID::COUNT)
+                //    SetActiveWidget(selectedID);
+
+                //if (m_activeWidgetID == WidgetID::CONSOLE)
+                {
+                    if (ImGui::BeginChild("Console", zeroVec, true))
+                        m_console.Update();
+
+                    ImGui::EndChild();
+                }
+                /*
+                if (m_activeWidgetID == WidgetID::HOTKEYS)
+                {
+                    if (ImGui::BeginChild("Keybinds", zeroVec, true))
+                        m_hotkeys.Update();
+                    ImGui::EndChild();
+                }
+                */
+            }
+            /*if (m_activeWidgetID == WidgetID::SETTINGS)
+            {
+                if (ImGui::BeginChild("Settings", zeroVec, true))
+                    m_settings.Update();
+                ImGui::EndChild();
+            }*/
+        }
+        ImGui::End();
     }
 
-    void DebugTools::toggleVisibility()
+    void DebugTools::OnEnable() 
     {
-        m_execHistoryIndex = -1;
+    }
+
+    void DebugTools::OnDisable() 
+    {
+    }
+
+    void DebugTools::ToggleVisibility()
+    {
         m_bIsTitleVisible = false;
         m_bIsVisible = !m_bIsVisible;
     }
 
-    bool DebugTools::isVisible() const
+    bool DebugTools::IsVisible() const
     {
         return m_bIsVisible;
     }
 
-    void DebugTools::onPreDraw()
+    void DebugTools::LogGameToConsole(const std::string& acpText)
     {
-        drawTopMenu();
+        if(m_console.GameLogEnabled())
+            m_console.Log(acpText);
     }
 
-    void DebugTools::onPostDraw()
-    {}
-
-    void DebugTools::drawTopMenu()
+    void DebugTools::DrawTopMenu()
     {
         static bool showDebugOutput = false;
         static bool showConsoleInput = true; // enable it by default
 
+        /*
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("Main"))
@@ -132,7 +160,7 @@ namespace DriverNG
 
             ImGui::EndMainMenuBar();
         }
-
+        
         if (showConsoleInput)
         {
             bool textChanged = false;
@@ -206,11 +234,7 @@ namespace DriverNG
         	
             ImGui::InputText("Lua code (enter to execute)", m_luaCommandStr, sizeof(m_luaCommandStr), textChanged ? ImGuiInputTextFlags_ReadOnly : 0);        	
             ImGui::End();
-        }
-    	
-        if (showDebugOutput)
-        {
-//            showGeomViewerWindow(&showGeomViewer);
-        }
+            
+        }*/
     }
 }

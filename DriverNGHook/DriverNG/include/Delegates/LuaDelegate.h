@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Delegates/ILuaDelegate.h>
+#include <sol/sol.hpp>
 
 namespace DriverNG
 {
@@ -16,6 +17,8 @@ namespace DriverNG
     protected:
         CallLuaFunction_t m_callLuaFunc{ nullptr };
 
-        
+        sol::state m_lua{ };
+
+        // TODO: Lua sandbox
     };
 }
