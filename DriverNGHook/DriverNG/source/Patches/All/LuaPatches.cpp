@@ -25,16 +25,13 @@ namespace DriverNG
     namespace Globals
     {
         static ILuaDelegate& g_luaDelegate = ILuaDelegate::GetInstance();
-        static lua_State* g_gameLuaState = nullptr;
 
     	static void InitializeLuaStateBindings(lua_State* newState)
     	{
-            g_gameLuaState = newState;
-    		
     		// report to the game state
             auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
 
-            g_luaDelegate.OnInitialised(callLuaFunction);
+            g_luaDelegate.OnInitialised(newState, callLuaFunction);
     	}
     }
 
@@ -47,13 +44,6 @@ namespace DriverNG
 
             // make game open chunk file
             origOpenScriptLoader(state);
-
-            // we do our own Lua initialization
-            auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
-
-            // then make to our bindings
-            // make game exec our file
-            callLuaFunction("dofile", "s", "plugins/DriverNGHook/scripts/game_autoexec.lua");
 
             // get the lua state from the address
             Globals::InitializeLuaStateBindings(state);

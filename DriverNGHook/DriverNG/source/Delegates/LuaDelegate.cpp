@@ -7,8 +7,6 @@
 
 class LuaAsyncQueue
 {
-	friend class ShaderAPIGL;
-
 public:
 	LuaAsyncQueue()
 	{
@@ -113,16 +111,44 @@ namespace DriverNG
         return *instance;
     }
 	
-    void LuaDelegate::OnInitialised(CallLuaFunction_t callFunc)
+    void LuaDelegate::OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc)
 	{
-		m_lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
-		sol_ImGui::InitBindings(m_lua);
+		m_callLuaFunc = callFunc;
+		m_gameState = lua_newthread(gameState);
 
-        m_callLuaFunc = callFunc;
+		sol::state_view sv(m_gameState);
 
-    	// init Lua hooks
-    	if(m_callLuaFunc)
-            m_callLuaFunc("driverNGHook_Init", ">");
+		// install our print function
+		sv["print"] = [](sol::variadic_args aArgs, sol::this_state aState)
+		{
+			std::ostringstream oss;
+			sol::state_view s(aState);
+
+			for (auto it = aArgs.cbegin(); it != aArgs.cend(); ++it)
+			{
+				if (it != aArgs.cbegin())
+				{
+					oss << " ";
+				}
+				std::string str = s["tostring"]((*it).get<sol::object>());
+				oss << str;
+			}
+
+			//spdlog::info(oss.str());
+
+			Globals::g_pDebugTools->LogGameToConsole(oss.str());
+		};
+
+		// init Lua hooks
+		if (m_callLuaFunc)
+		{
+			sv.do_file("plugins/DriverNGHook/scripts/game_autoexec.lua");
+			//m_callLuaFunc("dofile", "s", "plugins/DriverNGHook/scripts/game_autoexec.lua");
+			//m_callLuaFunc("driverNGHook_Init", ">");
+		}
+
+		//m_lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
+		//sol_ImGui::InitBindings(m_lua);
     }
 	
     void LuaDelegate::DoCommands()
@@ -134,14 +160,16 @@ namespace DriverNG
     	
         if (!m_callLuaFunc)
             return;
-    	
+
+		g_luaAsyncQueue.Run();
+    	/*
         int numLogItems = 0;
         char* pString = nullptr;
 
         workFlag = true;
 
 		g_luaAsyncQueue.Run();
-    	
+
     	do
     	{
             m_callLuaFunc("driverNGHook_LogPopNext", ">is", &numLogItems, &pString);
@@ -155,7 +183,20 @@ namespace DriverNG
         } while (numLogItems);
 
         workFlag = false;
+		*/
     }
+
+	sol::protected_function_result LuaDelegate::ExecuteString(const std::string& code)
+	{
+		sol::state_view state(m_gameState);
+		return state.do_string(code);
+	}
+
+	sol::protected_function_result LuaDelegate::ExecuteFile(const std::string& filename)
+	{
+		sol::state_view state(m_gameState);
+		return state.do_file(filename);
+	}
 
 	int LuaDelegate::Push(std::function<int()> f)
     {

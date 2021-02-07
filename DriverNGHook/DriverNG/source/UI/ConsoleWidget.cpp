@@ -158,7 +158,6 @@ namespace DriverNG
 			}
 
 			Internals::g_luaDelegate.Push([=]() {
-				
 				callLuaFunction("driverNGHook_EvalHelper", "s", commandStr.c_str());
 				return 0;
 			});
