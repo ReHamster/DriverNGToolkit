@@ -15,8 +15,8 @@ namespace DriverNG
         static constexpr uintptr_t kOpenScriptLoaderCallAddr = 0x005E7E04;
         static constexpr uintptr_t kOpenScriptLoaderOrigAddr = 0x0065A810;
 
-        //static constexpr uintptr_t kStartLuaCallAddress     = 0x005E7E35;     // to the call CState_Frontend_Loading::Step
-        //static constexpr uintptr_t kStartLuaOrigAddress     = 0x005E4C70;
+        static constexpr uintptr_t kDeleteLuaStateCallAddress     = 0x0078E975;
+        static constexpr uintptr_t kDeleteLuaStateOrigAddress     = 0x005E7E40;
 
         static constexpr uintptr_t kStepLuaCallAddress     = 0x0079B811;     // to the call CState_Main::Step
         static constexpr uintptr_t kStepLuaOrigAddress     = 0x005E4A70;
@@ -59,6 +59,16 @@ namespace DriverNG
             // do commands after
             Globals::g_luaDelegate.DoCommands();
         }
+
+        void DeleteLuaState_Hooked(lua_State* state)
+        {
+            typedef void (*DeleteLuaState_t)(lua_State*);
+            auto origDeleteLuaState = (DeleteLuaState_t)Consts::kDeleteLuaStateOrigAddress;
+
+            Globals::g_luaDelegate.OnDeleted();
+
+            origDeleteLuaState(state);
+        }
     }
 
     std::string_view LuaPatches::GetName() const { return "Lua Patch"; }
@@ -87,6 +97,8 @@ namespace DriverNG
 	        	return false;
 	        }
 
+            //------------------------------------------
+
             // Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::kStepLuaCallAddress, kStepLuaPatchSize))
             {
@@ -104,6 +116,28 @@ namespace DriverNG
             if (!m_stepLuaHook->setup())
             {
                 spdlog::error("Failed to setup patch to StepLua!");
+                return false;
+            }
+
+            //------------------------------------------
+
+            // Do not revert this patch!
+            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kDeleteLuaStateCallAddress, kDeleteLuaStatePatchSize))
+            {
+                spdlog::error("Failed to cleanup memory");
+                return false;
+            }
+
+            m_deleteLuaStateHook = HF::Hook::HookFunction<void(*)(lua_State*), kDeleteLuaStatePatchSize>(
+                process,
+                Consts::kDeleteLuaStateCallAddress,
+                &Callbacks::DeleteLuaState_Hooked,
+                {},
+                {});
+
+            if (!m_deleteLuaStateHook->setup())
+            {
+                spdlog::error("Failed to setup patch to DeleteLuaState!");
                 return false;
             }
 

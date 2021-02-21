@@ -57,9 +57,6 @@ namespace DriverNG
         }
 
         ImGui::EndFrame();
-        //device->SetRenderState(D3DRS_ZENABLE, false);
-        //device->SetRenderState(D3DRS_ALPHABLENDENABLE, false);
-        //device->SetRenderState(D3DRS_SCISSORTESTENABLE, false);
 
         ImGui::Render();
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());

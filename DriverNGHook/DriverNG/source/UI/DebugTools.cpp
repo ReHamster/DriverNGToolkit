@@ -57,6 +57,8 @@ namespace DriverNG
     	}
     	*/
 
+        Internals::g_luaDelegate.DoRenderUpdate();
+
         auto callLuaFunction = Internals::g_luaDelegate.GetCallLuaFunction();
         if (!callLuaFunction)
             return;
@@ -76,7 +78,7 @@ namespace DriverNG
 
         if (!m_bIsVisible)
             return;
-       
+
         if (ImGui::Begin("Driver NG Tools"))
         {
             const ImVec2 zeroVec = { 0, 0 };

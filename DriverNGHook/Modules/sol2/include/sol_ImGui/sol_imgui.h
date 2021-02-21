@@ -1624,7 +1624,7 @@ namespace sol_ImGui
     inline std::string GetClipboardText()																{ return std::string(ImGui::GetClipboardText()); }
     inline void SetClipboardText(const std::string& text)												{ ImGui::SetClipboardText(text.c_str()); }
 
-    inline void InitEnums(sol::state& lua)
+    inline void InitEnums(sol::state_view& lua)
     {
 #pragma region Window Flags
         lua.new_enum("ImGuiWindowFlags",
@@ -2004,7 +2004,7 @@ namespace sol_ImGui
 #endif // SOL_IMGUI_ENABLE_INPUT_FUNCTIONS
     }
 
-    inline void InitBindings(sol::state& lua)
+    inline void InitBindings(sol::state_view& lua)
     {
         InitEnums(lua);
 

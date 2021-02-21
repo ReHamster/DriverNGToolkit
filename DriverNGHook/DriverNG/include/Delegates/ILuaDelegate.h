@@ -16,8 +16,12 @@ namespace DriverNG
     	
         virtual ~ILuaDelegate() noexcept = default;
         virtual void OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc) = 0;
+        virtual void  OnDeleted() = 0;
 
         virtual void DoCommands() = 0;
+        virtual void DoRenderUpdate() = 0;
+
+        virtual bool IsOnlineGame() = 0;
 
         virtual sol::protected_function_result ExecuteString(const std::string& code) = 0;
         virtual sol::protected_function_result ExecuteFile(const std::string& filename) = 0;

@@ -12,8 +12,10 @@ namespace DriverNG
     {
         static constexpr size_t kOpenScriptLoaderPatchSize = 5;
         static constexpr size_t kStepLuaPatchSize = 5;
+        static constexpr size_t kDeleteLuaStatePatchSize = 5;
 
         HF::Hook::TrampolinePtr<kOpenScriptLoaderPatchSize> m_openScriptLoaderHook;
+        HF::Hook::TrampolinePtr<kDeleteLuaStatePatchSize> m_deleteLuaStateHook;
         HF::Hook::TrampolinePtr<kStepLuaPatchSize> m_stepLuaHook;
     public:
         LuaPatches() = default;
