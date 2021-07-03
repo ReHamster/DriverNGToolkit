@@ -5,7 +5,7 @@ namespace ReHamster::Client
     class IClient
     {
     private:
-        bool m_isOnline = true;
+        volatile bool m_isOnline = true;
 
     public:
         virtual ~IClient() noexcept = default;

@@ -247,6 +247,7 @@ namespace DriverNG
         BasicPatch::Revert(modules);
 
         m_registerClassAHook->remove();
+        m_directInput8CreateHook->remove();
 
         Globals::g_pInputDelegate.reset(nullptr);
     }

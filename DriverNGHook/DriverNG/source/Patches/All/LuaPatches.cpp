@@ -2,9 +2,11 @@
 #include <Patches/All/LuaPatches.h>
 #include <Delegates/ILuaDelegate.h>
 #include <Windows.h>
+#include <stdio.h>
 
 #include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
+#include <UI/DebugTools.h>
 
 namespace DriverNG
 {
@@ -20,10 +22,13 @@ namespace DriverNG
 
         static constexpr uintptr_t kStepLuaCallAddress     = 0x0079B811;     // to the call CState_Main::Step
         static constexpr uintptr_t kStepLuaOrigAddress     = 0x005E4A70;
+
+        static constexpr uintptr_t ksafe_vsprintfOrigAdress = 0x00903EBA;
     }
 
     namespace Globals
     {
+        extern std::unique_ptr<DebugTools> g_pDebugTools;
         static ILuaDelegate& g_luaDelegate = ILuaDelegate::GetInstance();
 
     	static void InitializeLuaStateBindings(lua_State* newState)
@@ -69,6 +74,31 @@ namespace DriverNG
 
             origDeleteLuaState(state);
         }
+
+        int __cdecl _vsnprintf_hooked(char* const _Buffer,size_t  const _BufferCount, char const* const _Format,va_list _ArgList )
+        {
+            int ret = _vsnprintf(_Buffer, _BufferCount, _Format, _ArgList);
+        	
+            // hook part
+            if (*_Buffer == '$')
+            {
+                const char* endStr = strchr(_Buffer, '$');
+                if (endStr != nullptr)
+                {
+                    auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
+
+                    callLuaFunction("DSF_RPC_CALL", "s", _Buffer);
+
+                    // TODO: check VEdit?
+                    //spdlog::info(_Buffer);
+                	//if(Globals::g_pDebugTools)
+					//	Globals::g_pDebugTools->LogGameToConsole(_Buffer);
+                }
+            }
+        	
+            return ret;
+        }
+
     }
 
     std::string_view LuaPatches::GetName() const { return "Lua Patch"; }
@@ -141,6 +171,28 @@ namespace DriverNG
                 return false;
             }
 
+        	//------------------------------------------
+
+			// Do not revert this patch!
+            if (!HF::Hook::FillMemoryByNOPs(process, Consts::ksafe_vsprintfOrigAdress, ksafe_vsprintfPatchSize))
+            {
+                spdlog::error("Failed to cleanup memory");
+                return false;
+            }
+            
+            m_safe_vsprintfHook = HF::Hook::HookFunction<int(__cdecl*)(char* const, size_t  const, char const* const, va_list), ksafe_vsprintfPatchSize>(
+                process,
+                Consts::ksafe_vsprintfOrigAdress,
+                &Callbacks::_vsnprintf_hooked,
+                {},
+                {});
+
+            if (!m_safe_vsprintfHook->setup())
+            {
+                spdlog::error("Failed to setup patch to safe_sprintf!");
+                return false;
+            }
+
             return BasicPatch::Apply(modules);
         }
 
@@ -152,6 +204,8 @@ namespace DriverNG
         BasicPatch::Revert(modules);
 
         m_openScriptLoaderHook->remove();
+        m_deleteLuaStateHook->remove();
         m_stepLuaHook->remove();
+        m_safe_vsprintfHook->remove();
     }
 }
