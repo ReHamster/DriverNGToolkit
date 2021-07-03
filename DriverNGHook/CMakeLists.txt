@@ -11,6 +11,7 @@ add_subdirectory(Modules/ImGui)
 add_subdirectory(Modules/HF)
 add_subdirectory(Modules/gtest)
 add_subdirectory(Modules/lua)
+add_subdirectory(Modules/luafilesystem)
 add_subdirectory(Modules/sol2)
 
 # add_subdirectory(Hamster)

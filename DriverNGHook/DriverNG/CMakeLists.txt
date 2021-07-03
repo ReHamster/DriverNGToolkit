@@ -12,4 +12,4 @@ file(GLOB_RECURSE HITMAN_BM_SOURCES
 add_library(DriverNG STATIC ${HITMAN_BM_SOURCES})
 
 target_include_directories(DriverNG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(DriverNG HF::Core DriverNGHook::IClient ImGui::Core ImGui::DX9 spdlog lua sol2::sol2_single dinput8 dxguid)
+target_link_libraries(DriverNG HF::Core DriverNGHook::IClient ImGui::Core ImGui::DX9 spdlog lua sol2::sol2_single luafilesystem dinput8 dxguid)

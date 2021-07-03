@@ -23,6 +23,8 @@ namespace DriverNG
 
         virtual bool IsOnlineGame() = 0;
 
+        virtual bool IsDeveloperConsoleAllowed() = 0;
+
         virtual sol::protected_function_result ExecuteString(const std::string& code) = 0;
         virtual sol::protected_function_result ExecuteFile(const std::string& filename) = 0;
 

@@ -15,6 +15,8 @@ namespace DriverNG
         void                                DoRenderUpdate() override;
         bool                                IsOnlineGame() override;
 
+        bool                                IsDeveloperConsoleAllowed() override;
+
         sol::protected_function_result      ExecuteString(const std::string& code);
         sol::protected_function_result      ExecuteFile(const std::string& filename);
 
@@ -36,5 +38,6 @@ namespace DriverNG
         sol::function m_onUpdate{ };
 
         bool m_allowOnlineCheats{ false };
+        bool m_allowDeveloperConsole{ false };
     };
 }

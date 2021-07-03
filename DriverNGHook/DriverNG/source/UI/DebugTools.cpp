@@ -142,6 +142,11 @@ namespace DriverNG
 
     void DebugTools::ToggleVisibility()
     {
+        if (!m_bIsVisible && !Internals::g_luaDelegate.IsDeveloperConsoleAllowed())
+        {
+            return;
+        }
+
         m_bIsTitleVisible = false;
         m_bIsVisible = !m_bIsVisible;
 

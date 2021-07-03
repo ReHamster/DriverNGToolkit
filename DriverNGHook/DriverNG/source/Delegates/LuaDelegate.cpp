@@ -4,6 +4,7 @@
 #include <UI/DebugTools.h>
 #include <imgui.h>
 #include <sol_imgui/sol_imgui.h>
+#include <lfs.h>
 
 class LuaAsyncQueue
 {
@@ -160,6 +161,8 @@ namespace DriverNG
 		m_callLuaFunc = callFunc;
 		m_gameState = gameState;
 
+		luaopen_lfs(m_gameState);
+
 		sol::state_view sv(m_gameState);
 
 		// install our print function to the game
@@ -203,6 +206,11 @@ namespace DriverNG
 				Globals::g_pDebugTools->LogGameToConsole("WARNING: Online cheats ARE ALLOWED");
 
 			m_allowOnlineCheats = enable;
+		};
+
+		m_luaState["setAllowDeveloperConsole"] = [this](bool enable)
+		{
+			m_allowDeveloperConsole = enable;
 		};
 
 		{
@@ -366,6 +374,11 @@ namespace DriverNG
 		}
 
 		return false;
+	}
+
+	bool LuaDelegate::IsDeveloperConsoleAllowed()
+	{
+		return m_allowDeveloperConsole;
 	}
 
 	sol::protected_function_result LuaDelegate::ExecuteString(const std::string& code)
