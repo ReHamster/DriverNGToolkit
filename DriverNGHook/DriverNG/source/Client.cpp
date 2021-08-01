@@ -11,6 +11,7 @@
 #include <Patches/All/ZDirect3D9DevicePatches.h>
 #include <Patches/All/InputDevicesPatches.h>
 #include <Patches/All/LuaPatches.h>
+#include <Patches/All/OnlinePatches.h>
 
 namespace DriverNG
 {
@@ -164,9 +165,6 @@ namespace DriverNG
 		m_patches->RegisterPatch<Direct3D9DevicePatches>(std::make_unique<DX9Delegate>());
 		m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
 		m_patches->RegisterPatch<LuaPatches>();
-		//m_patches->RegisterPatch<ZHitman3Patches>();
-		//m_patches->RegisterPatch<ZGEOMManagementPatch>();
-		//m_patches->RegisterPatch<EnableCheatsPatch>();
-		//m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
+		m_patches->RegisterPatch<OnlinePatches>();
 	}
 }

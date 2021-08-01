@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <sol_imgui/sol_imgui.h>
 #include <lfs.h>
+#include "lstate.h"
 
 class LuaAsyncQueue
 {
@@ -158,6 +159,8 @@ namespace DriverNG
 
     void LuaDelegate::OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc)
 	{
+		bool firstTimeInit = m_gameState == nullptr;
+
 		m_callLuaFunc = callFunc;
 		m_gameState = gameState;
 
@@ -186,44 +189,53 @@ namespace DriverNG
 			Globals::g_pDebugTools->LogGameToConsole(oss.str());
 		};
 
-		// init other lua state
-		m_luaState.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
-		sol_ImGui::InitBindings(m_luaState);
-
-		m_luaState["registerForEvent"] = [this](const std::string& acName, sol::function aCallback)
+		if (firstTimeInit)
 		{
-			if (acName == "onInit")
-				m_onInit = aCallback;
-			else if (acName == "onUpdate")
-				m_onUpdate = aCallback;
-			else
-				spdlog::error("Tried to register an unknown event '{}'!", acName);
-		};
+			// init other lua state
+			m_luaState.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
+			sol_ImGui::InitBindings(m_luaState);
 
-		m_luaState["setAllowOnlineCheats"] = [this](bool enable)
-		{
-			if(enable)
-				Globals::g_pDebugTools->LogGameToConsole("WARNING: Online cheats ARE ALLOWED");
+			m_luaState["registerForEvent"] = [this](const std::string& acName, sol::function aCallback)
+			{
+				if (acName == "onInit")
+					m_onInit = aCallback;
+				else if (acName == "onUpdate")
+					m_onUpdate = aCallback;
+				else
+					spdlog::error("Tried to register an unknown event '{}'!", acName);
+			};
 
-			m_allowOnlineCheats = enable;
-		};
+			m_luaState["setAllowOnlineCheats"] = [this](bool enable)
+			{
+				if (enable)
+					Globals::g_pDebugTools->LogGameToConsole("WARNING: Online cheats ARE ALLOWED");
 
-		m_luaState["setAllowDeveloperConsole"] = [this](bool enable)
-		{
-			m_allowDeveloperConsole = enable;
-		};
+				m_allowOnlineCheats = enable;
+			};
 
-		{
-			m_luaState.script_file("plugins/DriverNGHook/scripts/autoexec.lua");
-			TryLuaFunction(m_onInit);
+			m_luaState["setAllowDeveloperConsole"] = [this](bool enable)
+			{
+				m_allowDeveloperConsole = enable;
+			};
 
-			InitializeGameDevelopmentLib();
+			// Driver NG hook internals
+			{
+				m_luaState.script_file("plugins/DriverNGHook/scripts/autoexec.lua");
+				TryLuaFunction(m_onInit);
+
+				InitializeGameDevelopmentLib();
+			}
 		}
 
+		bool isOnline = IsOnlineGame();
+
 		// init game Lua hooks
-		if (m_callLuaFunc)
+		//if (!isOnline || isOnline && m_allowOnlineCheats)
 		{
-			sv.do_file("plugins/DriverNGHook/scripts/game_autoexec.lua");
+			if (m_callLuaFunc)
+			{
+				sv.do_file("plugins/DriverNGHook/scripts/game_autoexec.lua");
+			}
 		}
     }
 
@@ -341,9 +353,20 @@ namespace DriverNG
 		TryLuaFunction(m_onUpdate);
 	}
 
+	bool LuaDelegate::IsValidLuaState() const
+	{
+		if (!m_gameState)
+			return false;
+
+		if (!m_gameState->l_G)
+			return false;
+
+		return true;
+	}
+
     void LuaDelegate::DoCommands()
     {
-		if (!m_gameState)
+		if (!IsValidLuaState())
 			return;
 
 		if (IsOnlineGame() && !m_allowOnlineCheats)
@@ -357,14 +380,21 @@ namespace DriverNG
 
 	bool LuaDelegate::IsOnlineGame()
 	{
-		if (!m_gameState)
+		if (!IsValidLuaState())
 			return false;
 
 		sol::state_view state(m_gameState);
 
 		// for now we using Lua
 		sol::table networkLibTable = state["Network"];
+
+		if (!networkLibTable.valid())
+			return false;
+
 		sol::function getConnectionFn = networkLibTable["getConnection"];
+
+		if(!getConnectionFn.valid())
+			return false;
 
 		auto result = TryLuaFunction(getConnectionFn);
 		if (result.valid())
@@ -383,6 +413,9 @@ namespace DriverNG
 
 	sol::protected_function_result LuaDelegate::ExecuteString(const std::string& code)
 	{
+		if (!IsValidLuaState())
+			return sol::protected_function_result();
+
 		if (IsOnlineGame() && !m_allowOnlineCheats)
 			return sol::protected_function_result();
 
@@ -392,6 +425,9 @@ namespace DriverNG
 
 	sol::protected_function_result LuaDelegate::ExecuteFile(const std::string& filename)
 	{
+		if (!IsValidLuaState())
+			return sol::protected_function_result();
+
 		if (IsOnlineGame() && !m_allowOnlineCheats)
 			return sol::protected_function_result();
 

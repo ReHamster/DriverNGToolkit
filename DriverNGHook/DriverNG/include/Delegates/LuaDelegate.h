@@ -26,6 +26,8 @@ namespace DriverNG
 
     protected:
 
+        bool IsValidLuaState() const;
+
         void InitializeGameDevelopmentLib();
 
         CallLuaFunction_t m_callLuaFunc{ nullptr };

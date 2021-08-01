@@ -13,6 +13,7 @@ add_subdirectory(Modules/gtest)
 add_subdirectory(Modules/lua)
 add_subdirectory(Modules/luafilesystem)
 add_subdirectory(Modules/sol2)
+add_subdirectory(Modules/cereal)
 
 # add_subdirectory(Hamster)
 

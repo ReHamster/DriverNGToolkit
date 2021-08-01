@@ -98,7 +98,6 @@ namespace DriverNG
         	
             return ret;
         }
-
     }
 
     std::string_view LuaPatches::GetName() const { return "Lua Patch"; }
