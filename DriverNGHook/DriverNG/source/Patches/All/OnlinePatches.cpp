@@ -65,12 +65,13 @@ namespace DriverNG
         string ServiceUrl;
         string ConfigKey;
         string AccessKey;
+        bool Use;
 
         // ReSharper disable CppInconsistentNaming
         template <class Archive>
         void serialize(Archive& ar)
         {
-            ar(CEREAL_NVP(ServiceUrl), CEREAL_NVP(ConfigKey), CEREAL_NVP(AccessKey));
+            ar(CEREAL_NVP(ServiceUrl), CEREAL_NVP(ConfigKey), CEREAL_NVP(AccessKey), CEREAL_NVP(Use));
         }
 
         // ReSharper restore CppInconsistentNaming
@@ -130,14 +131,24 @@ namespace DriverNG
 
             Globals::DeserializeFromJsonFile(configPath, onlineConfig);
 
-            char* str = *(char**)Consts::kOnlineConfigServiceHostPRODAddress;
-            strcpy_s(str, 28, config.ServiceUrl.c_str());
+            if (config.Use)
+            {
+                char* str = *(char**)Consts::kOnlineConfigServiceHostPRODAddress;
+                strcpy_s(str, 28, config.ServiceUrl.c_str());
 
-            strcpy_s(self->m_cOnlineConfigKey, 64, config.ConfigKey.c_str());
-            strcpy_s(self->m_cSandboxKey, 32, config.AccessKey.c_str());
-            strcpy_s(self->m_cSandboxName, 32, "PC Sandbox DMC");
+                strcpy_s(self->m_cOnlineConfigKey, 64, config.ConfigKey.c_str());
+                strcpy_s(self->m_cSandboxKey, 32, config.AccessKey.c_str());
+                strcpy_s(self->m_cSandboxName, 32, "DriverMadness Sandbox A");
 
-            self->m_iSandboxTrackingID = 4;
+                self->m_iSandboxTrackingID = 4;
+            }
+            else
+            {
+                strcpy_s(self->m_cOnlineConfigKey, 64, "885642bfde8842b79bbcf2c1f8102403");
+                strcpy_s(self->m_cSandboxKey, 32, "w6kAtr3T");
+                strcpy_s(self->m_cSandboxName, 32, "PC Sandbox PA");
+                self->m_iSandboxTrackingID = 4;
+            }
         }
     }
 
