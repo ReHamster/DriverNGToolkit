@@ -39,7 +39,7 @@ namespace DriverNG
         sol::function m_onInit{ };
         sol::function m_onUpdate{ };
 
-        bool m_allowOnlineCheats{ false };
+        bool m_allowCustomGameScripts{ false };
         bool m_allowDeveloperConsole{ false };
     };
 }

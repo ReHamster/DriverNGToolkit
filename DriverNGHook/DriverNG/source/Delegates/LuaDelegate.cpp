@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <UI/DebugTools.h>
 #include <imgui.h>
-#include <sol_imgui/sol_imgui.h>
+//#include <sol_imgui/sol_imgui.h>
 #include <lfs.h>
 #include "lstate.h"
 
@@ -111,6 +111,11 @@ LuaAsyncQueue g_luaAsyncQueue;
 
 namespace DriverNG
 {	
+	namespace Consts
+	{
+		static const std::string luaScriptsPath = "plugins/DriverNGHook/scripts/";
+	}
+
 	namespace Globals
 	{
 		extern std::unique_ptr<DebugTools> g_pDebugTools;
@@ -189,11 +194,14 @@ namespace DriverNG
 			Globals::g_pDebugTools->LogGameToConsole(oss.str());
 		};
 
+		// set folder
+		sv["DNGHookScriptPath"] = Consts::luaScriptsPath;
+
 		if (firstTimeInit)
 		{
 			// init other lua state
 			m_luaState.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
-			sol_ImGui::InitBindings(m_luaState);
+			//sol_ImGui::InitBindings(m_luaState);
 
 			m_luaState["registerForEvent"] = [this](const std::string& acName, sol::function aCallback)
 			{
@@ -205,12 +213,12 @@ namespace DriverNG
 					spdlog::error("Tried to register an unknown event '{}'!", acName);
 			};
 
-			m_luaState["setAllowOnlineCheats"] = [this](bool enable)
+			m_luaState["allowCustomGameScripts"] = [this](bool enable)
 			{
 				if (enable)
-					Globals::g_pDebugTools->LogGameToConsole("WARNING: Online cheats ARE ALLOWED");
+					Globals::g_pDebugTools->LogGameToConsole("Custom game scripts are allowed");
 
-				m_allowOnlineCheats = enable;
+				m_allowCustomGameScripts = enable;
 			};
 
 			m_luaState["setAllowDeveloperConsole"] = [this](bool enable)
@@ -220,21 +228,36 @@ namespace DriverNG
 
 			// Driver NG hook internals
 			{
-				m_luaState.script_file("plugins/DriverNGHook/scripts/autoexec.lua");
+				m_luaState.script_file(Consts::luaScriptsPath + "autoexec.lua");
 				TryLuaFunction(m_onInit);
 
 				InitializeGameDevelopmentLib();
 			}
 		}
 
-		bool isOnline = IsOnlineGame();
+		// little game hooks to allow console stuff
+		if (m_allowDeveloperConsole)
+		{
+			try
+			{
+				sv.do_file(Consts::luaScriptsPath + "driverNGConsole.lua");
+			}
+			catch (sol::error& err)
+			{
+				spdlog::warn("driverNGConsole.lua failed to load");
+			}
+		}
 
 		// init game Lua hooks
-		//if (!isOnline || isOnline && m_allowOnlineCheats)
+		if (m_allowCustomGameScripts && m_callLuaFunc)
 		{
-			if (m_callLuaFunc)
+			try
 			{
-				sv.do_file("plugins/DriverNGHook/scripts/game_autoexec.lua");
+				sv.do_file(Consts::luaScriptsPath + "game_autoexec.lua");
+			}
+			catch (sol::error& err)
+			{
+				spdlog::warn("game_autoexec.lua failed to load");
 			}
 		}
     }
@@ -369,7 +392,7 @@ namespace DriverNG
 		if (!IsValidLuaState())
 			return;
 
-		if (IsOnlineGame() && !m_allowOnlineCheats)
+		if (IsOnlineGame() && !m_allowCustomGameScripts)
 		{
 			g_luaAsyncQueue.Clear();
 			return;
@@ -416,7 +439,7 @@ namespace DriverNG
 		if (!IsValidLuaState())
 			return sol::protected_function_result();
 
-		if (IsOnlineGame() && !m_allowOnlineCheats)
+		if (IsOnlineGame() && !m_allowCustomGameScripts)
 			return sol::protected_function_result();
 
 		sol::state_view state(m_gameState);
@@ -428,7 +451,7 @@ namespace DriverNG
 		if (!IsValidLuaState())
 			return sol::protected_function_result();
 
-		if (IsOnlineGame() && !m_allowOnlineCheats)
+		if (IsOnlineGame() && !m_allowCustomGameScripts)
 			return sol::protected_function_result();
 
 		sol::state_view state(m_gameState);
