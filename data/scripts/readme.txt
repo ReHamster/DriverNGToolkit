@@ -1,0 +1,1 @@
+Those scripts must be placed in <DSF_FOLDER>/plugins/DriverNGHook/scripts
