@@ -113,25 +113,29 @@ namespace DriverNG
             const auto configPath = currentPath / path(Consts::CONFIG_NAME);
 
             // ReSharper disable CppRedundantQualifier
+            bool error = false;
 
-            if (!fs::exists(configPath))
+            if (fs::exists(configPath))
             {
-                spdlog::error("{} file not found!", Consts::CONFIG_NAME);
-                return;
-            }
+                if(fs::is_empty(configPath))
+                    spdlog::error("{} file not found!", Consts::CONFIG_NAME);
 
-            if (fs::exists(configPath) && fs::is_empty(configPath))
+                error = true;
+            }
+            else
             {
                 spdlog::error("{} file is empty!", Consts::CONFIG_NAME);
-                return;
+                error = true;
             }
 
             OnlineConfig config;
-            NameValuePair<OnlineConfig&> onlineConfig("OnlineConfig", config);
+            if (!error)
+            {
+                NameValuePair<OnlineConfig&> onlineConfig("OnlineConfig", config);
+                Globals::DeserializeFromJsonFile(configPath, onlineConfig);
+            }
 
-            Globals::DeserializeFromJsonFile(configPath, onlineConfig);
-
-            if (config.Use)
+            if (!error && config.Use)
             {
                 char* str = *(char**)Consts::kOnlineConfigServiceHostPRODAddress;
                 strcpy_s(str, 28, config.ServiceUrl.c_str());
@@ -149,6 +153,8 @@ namespace DriverNG
                 strcpy_s(self->m_cSandboxName, 32, "PC Sandbox PA");
                 self->m_iSandboxTrackingID = 4;
             }
+
+            // ReSharper restore CppRedundantQualifier
         }
     }
 
