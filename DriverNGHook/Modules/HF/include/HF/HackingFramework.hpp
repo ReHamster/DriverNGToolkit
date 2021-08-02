@@ -233,6 +233,9 @@ namespace HF
                 if (!m_valid)
                     return nullptr;
 
+                if (!m_modules.contains(m_name))
+                    return nullptr;
+
                 return m_modules.at(m_name);
             }
 
