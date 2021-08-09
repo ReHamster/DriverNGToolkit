@@ -47,11 +47,6 @@ namespace ReHamster
 
 	int Core::EntryPoint(const void*)
 	{
-#ifdef _DEBUG
-		ReHamster::DebugConsole::Create("DriverNG Hook | Developer Console");
-#endif
-		ReHamster::Logger::Setup();
-
 		CrashHandlerReporter crashHandlerReporter;
 
 		// Setup client core
@@ -60,31 +55,30 @@ namespace ReHamster
 		if (!g_ClientInterface)
 			return EXIT_FAILURE;
 
-		spdlog::info("Core::EntryPoint() run ...");
-
 		const auto gameVersion = TryToDetectGameVersion();
 		bool isOkVersion = false;
 
 		switch (gameVersion)
 		{
 		case GameVersion::DriverSanFrancisco_PC_1_0_4:
-			spdlog::info("Core::EntryPoint() | Detected '1.04.1114' version. Version is OK");
 			isOkVersion = true;
 			break;
 		case GameVersion::UnknownBuild:
-			spdlog::error("Core::EntryPoint() Failed. Unknown or invalid game version");
 			break;
 		}
 
 		if (!isOkVersion)
 		{
-			spdlog::error(" *** The game version was rejected. DriverNGHook will shutdown, the game will work normally! *** ");
-
 			MessageBox(nullptr, "Sorry, but this game not supported yet", "DriverNGHook| Game not supported", MB_ICONEXCLAMATION | MB_OK);
 			delete g_ClientInterface;
 			ReHamster::Logger::Shutdown();
 			return EXIT_FAILURE;
 		}
+
+#if 1//def _DEBUG
+		ReHamster::DebugConsole::Create("DriverNG Hook | Developer Console");
+#endif
+		ReHamster::Logger::Setup();
 
 		if (!g_ClientInterface->OnAttach())
 		{

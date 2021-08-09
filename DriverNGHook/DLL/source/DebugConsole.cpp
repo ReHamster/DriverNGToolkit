@@ -3,7 +3,7 @@
 
 namespace ReHamster
 {
-    bool DebugConsole::g_bIsCreated = false;
+    volatile bool DebugConsole::g_bIsCreated = false;
 
     void DebugConsole::Create(std::string_view caption)
     {
