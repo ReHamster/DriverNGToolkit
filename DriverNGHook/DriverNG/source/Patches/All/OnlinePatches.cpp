@@ -53,6 +53,23 @@ namespace Quazal
     };
 }
 
+namespace Hermes
+{
+	enum LogChannel
+	{
+		LC_error = 0,
+		LC_warning = 1,
+		LC_info = 2,
+		LC_sample = 3,
+		LC_system_info = 4,
+		LC_result = 5,
+		LC_debug1 = 6,
+		LC_debug2 = 7,
+	};
+
+	typedef void(__cdecl* LogCallback)(Hermes::LogChannel, const char*);
+}
+
 namespace DriverNG
 {
     using namespace std;
@@ -81,6 +98,7 @@ namespace DriverNG
     {
         static constexpr uintptr_t kOnlineConfigServiceHostPRODAddress = 0x016DD358;
         static constexpr uintptr_t kSandboxSelectorConstructorAddr = 0x004CF530;
+		static constexpr uintptr_t kHermesLogCallbackAddr = 0x016DB558;
         static constexpr auto CONFIG_NAME = "Orbit.json";
     }
 
@@ -107,6 +125,31 @@ namespace DriverNG
         using std::filesystem::path;
         namespace fs = std::filesystem;
 
+		void OnlineLogCallback(Hermes::LogChannel channel, const char* msg)
+		{
+			switch (channel)
+			{
+				case Hermes::LC_error:
+					spdlog::error(msg);
+					break;
+				case Hermes::LC_warning:
+					spdlog::warn(msg);
+					break;
+				case Hermes::LC_info:
+				case Hermes::LC_sample:
+				case Hermes::LC_system_info:
+				case Hermes::LC_result:
+					spdlog::info(msg);
+					break;
+				case Hermes::LC_debug1:
+					spdlog::debug(msg);
+					break;
+				case Hermes::LC_debug2:
+					spdlog::debug("debug2: {}", msg);
+					break;
+			}
+		}
+
         void __stdcall OnSandboxSelectorConstructor(SandboxSelector* self)
         {
             const auto currentPath = fs::current_path();
@@ -117,10 +160,12 @@ namespace DriverNG
 
             if (fs::exists(configPath))
             {
-                if(fs::is_empty(configPath))
+                if (fs::is_empty(configPath))
+                {
                     spdlog::error("{} file not found!", Consts::CONFIG_NAME);
-
-                error = true;
+                    error = true;
+                }
+               
             }
             else
             {
@@ -155,6 +200,11 @@ namespace DriverNG
             }
 
             // ReSharper restore CppRedundantQualifier
+
+			// also set ours OnlineLog callback
+			Hermes::LogCallback* hermesLogCallback = (Hermes::LogCallback*)Consts::kHermesLogCallbackAddr;
+
+			*hermesLogCallback = OnlineLogCallback;
         }
     }
 
