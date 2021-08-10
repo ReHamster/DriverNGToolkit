@@ -2,8 +2,7 @@
 -- DriverNG Hook layer
 --------------------------------------------
 
-setAllowDeveloperConsole(true)
-allowCustomGameScripts(false)
+allowCustomGameScripts(true)
 
 Development = {
 	enableDevText = false,

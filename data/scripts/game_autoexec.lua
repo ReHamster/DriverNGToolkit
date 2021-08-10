@@ -2,6 +2,11 @@
 -- DriverNG Game layer
 --------------------------------------------
 
+driverNGHook = {
+	gamePaused = false,
+	gameLaunched = false
+}
+
 UserLuaMediaPath = MediaPath .. "UserLuaScripts\\"
 --LuaMediaPath = MediaPath .. "LuaScripts\\"
 

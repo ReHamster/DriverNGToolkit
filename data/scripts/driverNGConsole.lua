@@ -1,10 +1,6 @@
 dofile(DNGHookScriptPath.. "driverNGUtil.lua")
 dofile(DNGHookScriptPath.. "driverNGDocsUtil.lua")
 
-driverNGHook = {
-	gamePaused = false,
-	gameLaunched = false
-}
 
 -- this is called from the hook via CallLuaFunction
 function driverNGHook_EvalHelper(luaExprStr)	
