@@ -9,6 +9,16 @@
 #error "Supported only x86"
 #endif
 
+class CDynInitializer
+{
+public:
+	CDynInitializer()
+	{
+		ReHamster::Core::Init();
+	}
+};
+static CDynInitializer s_initializer;
+
 DWORD g_dwWorkerThreadId = 0x0;
 
 static constexpr auto kDefaultStackSize = 0x0;

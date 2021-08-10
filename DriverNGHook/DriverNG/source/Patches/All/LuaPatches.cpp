@@ -88,11 +88,6 @@ namespace DriverNG
                     auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
 
                     callLuaFunction("DSF_RPC_CALL", "s", _Buffer);
-
-                    // TODO: check VEdit?
-                    //spdlog::info(_Buffer);
-                	//if(Globals::g_pDebugTools)
-					//	Globals::g_pDebugTools->LogGameToConsole(_Buffer);
                 }
             }
         	
@@ -106,6 +101,7 @@ namespace DriverNG
     {
         if (auto process = modules.process.lock())
 		{
+			
 	        // Do not revert this patch!
 	        if (!HF::Hook::FillMemoryByNOPs(process, Consts::kOpenScriptLoaderCallAddr, kOpenScriptLoaderPatchSize))
 	        {

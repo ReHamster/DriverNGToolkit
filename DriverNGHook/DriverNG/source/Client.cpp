@@ -88,8 +88,10 @@ namespace DriverNG
 			return false;
 		}
 
+#ifdef _DEBUG
 		PrintModInfo(m_selfModule);
 		PrintModInfo(m_d3d9Module);
+#endif
 
 		return true;
 	}
@@ -103,9 +105,19 @@ namespace DriverNG
 
 	void Client::RegisterPatches()
 	{
-		m_patches->RegisterPatch<Direct3D9DevicePatches>(std::make_unique<DX9Delegate>());
-		m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
 		m_patches->RegisterPatch<LuaPatches>();
 		m_patches->RegisterPatch<OnlinePatches>();
+
+		const char* cmd = GetCommandLineA();
+
+		if (strstr(cmd, "-tools") != nullptr)
+		{
+			m_patches->RegisterPatch<Direct3D9DevicePatches>(std::make_unique<DX9Delegate>());
+			m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
+		}
+		else
+		{
+			m_patches->RegisterPatch<InputDevicesPatches>();
+		}
 	}
 }

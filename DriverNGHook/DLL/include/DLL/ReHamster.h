@@ -5,8 +5,8 @@ namespace ReHamster
     class Core
     {
     public:
+		static void Init();
         static int EntryPoint(const void*);
-
     private:
         enum class GameVersion {
             DriverSanFrancisco_PC_1_0_4,

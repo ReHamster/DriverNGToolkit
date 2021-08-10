@@ -2,8 +2,8 @@
 #include <Delegates/LuaDelegate.h>
 #include <spdlog/spdlog.h>
 #include <UI/DebugTools.h>
-#include <imgui.h>
-//#include <sol_imgui/sol_imgui.h>
+// #include <imgui.h>
+// #include <sol_imgui/sol_imgui.h>
 #include <lfs.h>
 #include "lstate.h"
 
@@ -173,6 +173,12 @@ namespace DriverNG
 
 		sol::state_view sv(m_gameState);
 
+		const char* cmd = GetCommandLineA();
+		if (strstr(cmd, "-tools") != nullptr)
+		{
+			m_allowDeveloperConsole = true;
+		}
+
 		// install our print function to the game
 		sv["print"] = [](sol::variadic_args aArgs, sol::this_state aState)
 		{
@@ -189,9 +195,10 @@ namespace DriverNG
 				oss << str;
 			}
 
-			//spdlog::info(oss.str());
+			spdlog::info("[Lua] {}", oss.str());
 
-			Globals::g_pDebugTools->LogGameToConsole(oss.str());
+			if(Globals::g_pDebugTools)
+				Globals::g_pDebugTools->LogGameToConsole(oss.str());
 		};
 
 		// set folder
@@ -216,14 +223,15 @@ namespace DriverNG
 			m_luaState["allowCustomGameScripts"] = [this](bool enable)
 			{
 				if (enable)
-					Globals::g_pDebugTools->LogGameToConsole("Custom game scripts are allowed");
+				{
+					const char* messageStr = "Custom game scripts are allowed";
+					spdlog::info(messageStr);
+
+					if (Globals::g_pDebugTools)
+						Globals::g_pDebugTools->LogGameToConsole(messageStr);
+				}
 
 				m_allowCustomGameScripts = enable;
-			};
-
-			m_luaState["setAllowDeveloperConsole"] = [this](bool enable)
-			{
-				m_allowDeveloperConsole = enable;
 			};
 
 			// Driver NG hook internals
@@ -231,7 +239,7 @@ namespace DriverNG
 				m_luaState.script_file(Consts::luaScriptsPath + "autoexec.lua");
 				TryLuaFunction(m_onInit);
 
-				InitializeGameDevelopmentLib();
+				//InitializeGameDevelopmentLib();
 			}
 		}
 
@@ -392,7 +400,7 @@ namespace DriverNG
 		if (!IsValidLuaState())
 			return;
 
-		if (IsOnlineGame() && !m_allowCustomGameScripts)
+		if (!m_allowCustomGameScripts)
 		{
 			g_luaAsyncQueue.Clear();
 			return;

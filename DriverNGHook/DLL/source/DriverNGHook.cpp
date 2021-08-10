@@ -18,6 +18,57 @@ namespace ReHamster
 		return new DriverNG::Client();
 	}
 
+	void Core::Init()
+	{
+		const char* cmd = GetCommandLineA();
+
+		if (strstr(cmd, "-console") != nullptr)
+		{
+			ReHamster::DebugConsole::Create("DriverNG Hook | Developer Console");
+		}
+		
+		ReHamster::Logger::Setup();
+
+		// Setup client core
+		g_ClientInterface = CreateClientInterface();
+		RH_ASSERT2(g_ClientInterface != nullptr, "Bad g_ClientInterface interface! Probably CreateClientInterface() failed!");
+		if (!g_ClientInterface)
+			return;// EXIT_FAILURE;
+
+		const auto gameVersion = TryToDetectGameVersion();
+		bool isOkVersion = false;
+
+		switch (gameVersion)
+		{
+			case GameVersion::DriverSanFrancisco_PC_1_0_4:
+				isOkVersion = true;
+				break;
+			case GameVersion::UnknownBuild:
+				break;
+		}
+
+		if (!isOkVersion)
+		{
+			MessageBox(nullptr, "Sorry, but this game not supported yet", "DriverNGHook| Game not supported", MB_ICONEXCLAMATION | MB_OK);
+
+			delete g_ClientInterface;
+			g_ClientInterface = nullptr;
+
+			ReHamster::Logger::Shutdown();
+			return;
+		}
+
+		if (!g_ClientInterface->OnAttach())
+		{
+			RH_ASSERT2(g_ClientInterface->OnAttach(), "g_ClientInterface->OnAttach() failed! See console for details!");
+
+			delete g_ClientInterface;
+			g_ClientInterface = nullptr;
+
+			ReHamster::Logger::Shutdown();
+		}
+	}
+
 	Core::GameVersion Core::TryToDetectGameVersion()
 	{
 		struct VersionDef
@@ -47,45 +98,10 @@ namespace ReHamster
 
 	int Core::EntryPoint(const void*)
 	{
-		CrashHandlerReporter crashHandlerReporter;
-
-		// Setup client core
-		g_ClientInterface = CreateClientInterface();
-		RH_ASSERT2(g_ClientInterface != nullptr, "Bad g_ClientInterface interface! Probably CreateClientInterface() failed!");
 		if (!g_ClientInterface)
 			return EXIT_FAILURE;
 
-		const auto gameVersion = TryToDetectGameVersion();
-		bool isOkVersion = false;
-
-		switch (gameVersion)
-		{
-		case GameVersion::DriverSanFrancisco_PC_1_0_4:
-			isOkVersion = true;
-			break;
-		case GameVersion::UnknownBuild:
-			break;
-		}
-
-		if (!isOkVersion)
-		{
-			MessageBox(nullptr, "Sorry, but this game not supported yet", "DriverNGHook| Game not supported", MB_ICONEXCLAMATION | MB_OK);
-			delete g_ClientInterface;
-			ReHamster::Logger::Shutdown();
-			return EXIT_FAILURE;
-		}
-
-#if 1//def _DEBUG
-		ReHamster::DebugConsole::Create("DriverNG Hook | Developer Console");
-#endif
-		ReHamster::Logger::Setup();
-
-		if (!g_ClientInterface->OnAttach())
-		{
-			RH_ASSERT2(g_ClientInterface->OnAttach(), "g_ClientInterface->OnAttach() failed! See console for details!");
-			ReHamster::Logger::Shutdown();
-			return EXIT_FAILURE;
-		}
+		CrashHandlerReporter crashHandlerReporter;
 
 		g_ClientInterface->Run();
 
