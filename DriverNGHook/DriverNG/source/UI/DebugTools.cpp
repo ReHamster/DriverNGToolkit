@@ -1,7 +1,7 @@
 #include <UI/DebugTools.h>
 #include <UI/Widget.h>
 
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 #include <imgui.h>
 #include <string>
 #include <Delegates/ILuaDelegate.h>

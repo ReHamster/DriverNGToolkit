@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <Delegates/LuaDelegate.h>
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 #include <UI/DebugTools.h>
 // #include <imgui.h>
 // #include <sol_imgui/sol_imgui.h>
@@ -134,12 +134,12 @@ namespace DriverNG
 			}
 			catch (std::exception& e)
 			{
-				spdlog::error(e.what());
+				MsgError("%s\n", e.what());
 			}
 			if (!result.valid())
 			{
 				const sol::error cError = result;
-				spdlog::error(cError.what());
+				MsgError("%s\n",cError.what());
 			}
 		}
 		return result;
@@ -195,7 +195,7 @@ namespace DriverNG
 				oss << str;
 			}
 
-			spdlog::info("[Lua] {}", oss.str());
+			MsgInfo("[Lua] %s\n", oss.str().c_str());
 
 			if(Globals::g_pDebugTools)
 				Globals::g_pDebugTools->LogGameToConsole(oss.str());
@@ -217,15 +217,15 @@ namespace DriverNG
 				else if (acName == "onUpdate")
 					m_onUpdate = aCallback;
 				else
-					spdlog::error("Tried to register an unknown event '{}'!", acName);
+					MsgError("Tried to register an unknown event '%s'!\n", acName.c_str());
 			};
 
 			m_luaState["allowCustomGameScripts"] = [this](bool enable)
 			{
 				if (enable)
 				{
-					const char* messageStr = "Custom game scripts are allowed";
-					spdlog::info(messageStr);
+					const char* messageStr = "Custom game scripts are allowed\n";
+					MsgInfo(messageStr);
 
 					if (Globals::g_pDebugTools)
 						Globals::g_pDebugTools->LogGameToConsole(messageStr);
@@ -252,7 +252,7 @@ namespace DriverNG
 			}
 			catch (sol::error& err)
 			{
-				spdlog::warn("driverNGConsole.lua failed to load");
+				MsgWarning("driverNGConsole.lua failed to load\n");
 			}
 		}
 
@@ -265,7 +265,7 @@ namespace DriverNG
 			}
 			catch (sol::error& err)
 			{
-				spdlog::warn("game_autoexec.lua failed to load");
+				MsgWarning("game_autoexec.lua failed to load\n");
 			}
 		}
     }
@@ -325,8 +325,6 @@ namespace DriverNG
 			sol::function add2DTextFunc = tbl["add2DText"];
 
 			TryLuaFunction(add2DTextFunc, tbl, nID, acLabel);
-
-			//spdlog::warn("id: {} label: {}\n", nID, acLabel);
 		};
 		developmentLibTable["add3DText"] = [this](const sol::table _this, int nID)
 		{
@@ -336,7 +334,7 @@ namespace DriverNG
 		};
 		developmentLibTable["eraseText"] = [this](const sol::table _this, int nID)
 		{
-			spdlog::warn("eraseText: {}\n", nID);
+			MsgWarning("eraseText: %d\n", nID);
 		};
 		developmentLibTable["startDevTextBatch"] = [this](const sol::table _this, int nID)
 		{

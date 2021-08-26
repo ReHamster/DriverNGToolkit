@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 #include <DLL/ReHamster.h>
+#include <DLL/CrashHandlerReporter.h>
 
 #ifndef _WIN32
 #error "Supported only x86"
@@ -16,23 +17,35 @@ public:
 	{
 		ReHamster::Core::Init();
 	}
+
+	~CDynInitializer()
+	{
+		ReHamster::Core::Shutdown();
+	}
+
+	ReHamster::CrashHandlerReporter crashHandlerReporter;
 };
 static CDynInitializer s_initializer;
 
+#if 0
 DWORD g_dwWorkerThreadId = 0x0;
-
 static constexpr auto kDefaultStackSize = 0x0;
 
 DWORD WINAPI WorkerThread(void* arg)
 {
-    return ReHamster::Core::EntryPoint(arg);
+	ReHamster::Core::Init();
+    DWORD retVal = ReHamster::Core::EntryPoint(arg);
+	ReHamster::Core::Shutdown();
+	return retVal;
 }
-
+#endif
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
-        CreateThread(nullptr, kDefaultStackSize, (LPTHREAD_START_ROUTINE)WorkerThread, nullptr, 0, &g_dwWorkerThreadId);
+#if 0
+		CreateThread(nullptr, kDefaultStackSize, (LPTHREAD_START_ROUTINE)WorkerThread, nullptr, 0, &g_dwWorkerThreadId);
+#endif
     }
     else if (fdwReason == DLL_PROCESS_DETACH)
     {

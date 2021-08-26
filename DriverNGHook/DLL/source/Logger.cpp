@@ -1,5 +1,5 @@
 #include <DLL/Logger.h>
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 
 #include <Windows.h>
 
@@ -7,11 +7,12 @@ namespace ReHamster
 {
     void Logger::Setup()
     {
+		Install_ConsoleSpewFunction();
     }
 
     void Logger::Shutdown()
     {
-        spdlog::shutdown();
+		Remove_ConsoleSpewFunction();
     }
 
     void Logger::Assert(bool condition,
@@ -23,19 +24,20 @@ namespace ReHamster
     {
         if (!condition)
         {
-            const auto msg = fmt::format(
+			static char msg[4096];
+            sprintf(msg,
                     "ASSERTION FAILED!\n\n"
-                    "Condition: {}\n"
-                    "Function: {}\n"
-                    "Line: {}\n"
-                    "File: {}\n",
+                    "Condition: %s\n"
+                    "Function: %s\n"
+                    "Line: %s\n"
+                    "File: %s\n",
                     condition_str.data(),
                     function.data(),
                     line,
                     file.data()
             );
 
-            MessageBox(nullptr, msg.data(), "ASSERTION FAILED!", MB_ICONEXCLAMATION | MB_OK);
+            MessageBox(nullptr, msg, "ASSERTION FAILED!", MB_ICONEXCLAMATION | MB_OK);
             ExitProcess(EXIT_FAILURE);
         }
     }

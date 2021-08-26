@@ -1,7 +1,7 @@
 #include <DLL/CrashHandlerReporter.h>
 #include <Windows.h>
 #include <DbgHelp.h>
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 
 bool isExceptionRequierMiniDump(EXCEPTION_POINTERS* frame)
 {
@@ -59,23 +59,23 @@ void WriteMiniDump(EXCEPTION_POINTERS* exception = nullptr)
 
 void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
 {
-    spdlog::error("******************************************************************************");
-    spdlog::error("                                 FATAL ERROR!								  ");
-    spdlog::error("******************************************************************************");
-    spdlog::error("Exception code   : {:08X}",   exceptionInfoFrame->ExceptionRecord->ExceptionCode);
-    spdlog::error("Exception flags  : {:08X}",   exceptionInfoFrame->ExceptionRecord->ExceptionFlags);
-    spdlog::error("Exception addr   : {:08X}", (DWORD)exceptionInfoFrame->ExceptionRecord->ExceptionAddress);
-    spdlog::error("Registers:");
-    spdlog::error("             EAX : {:08X}", exceptionInfoFrame->ContextRecord->Eax);
-    spdlog::error("             EBX : {:08X}", exceptionInfoFrame->ContextRecord->Ebx);
-    spdlog::error("             EDX : {:08X}", exceptionInfoFrame->ContextRecord->Edx);
-    spdlog::error("             ECX : {:08X}", exceptionInfoFrame->ContextRecord->Ecx);
-    spdlog::error("             EDI : {:08X}", exceptionInfoFrame->ContextRecord->Edi);
-    spdlog::error("             ESI : {:08X}", exceptionInfoFrame->ContextRecord->Esi);
-    spdlog::error("             EBP : {:08X}", exceptionInfoFrame->ContextRecord->Ebp);
-    spdlog::error("             EIP : {:08X}", exceptionInfoFrame->ContextRecord->Eip);
-    spdlog::error("             ESP : {:08X}", exceptionInfoFrame->ContextRecord->Esp);
-    spdlog::error("******************************************************************************");
+    MsgError("******************************************************************************\n");
+    MsgError("                                 FATAL ERROR!								  \n");
+    MsgError("******************************************************************************\n");
+    MsgError("Exception code   : 0x%x\n",   exceptionInfoFrame->ExceptionRecord->ExceptionCode);
+    MsgError("Exception flags  : 0x%x\n",   exceptionInfoFrame->ExceptionRecord->ExceptionFlags);
+    MsgError("Exception addr   : 0x%x\n", (DWORD)exceptionInfoFrame->ExceptionRecord->ExceptionAddress);
+    MsgError("Registers:\n");
+    MsgError("             EAX : 0x%x\n", exceptionInfoFrame->ContextRecord->Eax);
+    MsgError("             EBX : 0x%x\n", exceptionInfoFrame->ContextRecord->Ebx);
+    MsgError("             EDX : 0x%x\n", exceptionInfoFrame->ContextRecord->Edx);
+    MsgError("             ECX : 0x%x\n", exceptionInfoFrame->ContextRecord->Ecx);
+    MsgError("             EDI : 0x%x\n", exceptionInfoFrame->ContextRecord->Edi);
+    MsgError("             ESI : 0x%x\n", exceptionInfoFrame->ContextRecord->Esi);
+    MsgError("             EBP : 0x%x\n", exceptionInfoFrame->ContextRecord->Ebp);
+    MsgError("             EIP : 0x%x\n", exceptionInfoFrame->ContextRecord->Eip);
+    MsgError("             ESP : 0x%x\n", exceptionInfoFrame->ContextRecord->Esp);
+    MsgError("******************************************************************************\n");
 
     MessageBox(
             NULL,
@@ -119,7 +119,7 @@ namespace ReHamster
         SetUnhandledExceptionFilter(reinterpret_cast<LPTOP_LEVEL_EXCEPTION_FILTER>(m_prevHandler));
         if (!AddVectoredExceptionHandler(0UL, VectoredExceptionHandlerWin32))
         {
-            spdlog::warn("AddVectoredExceptionHandler failed!");
+            MsgWarning("AddVectoredExceptionHandler failed!\n");
         }
     }
 }

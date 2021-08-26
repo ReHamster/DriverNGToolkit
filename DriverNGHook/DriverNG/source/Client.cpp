@@ -1,7 +1,7 @@
 #include <Client.h>
 
 #include <HF/HackingFramework.hpp>
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 
 /// Delegates
 #include <Delegates/DX9Delegate.h>
@@ -20,7 +20,7 @@ namespace DriverNG
 
 	bool Client::OnAttach()
 	{
-		spdlog::info("----------[ DriverNG Hook initialization ]----------");
+		MsgInfo("----------[ DriverNG Hook initialization ]----------\n");
 
 		if (!LocateModules()) 
 			return false;
@@ -28,7 +28,7 @@ namespace DriverNG
 		// Register game configuration
 		if (!RegisterGameConfigurationForHamster())
 		{
-			spdlog::error("Failed to register game configuration!");
+			MsgError("Failed to register game configuration!\n");
 			return false;
 		}
 
@@ -36,7 +36,7 @@ namespace DriverNG
 		RegisterPatches();
 		if (!m_patches->Setup())
 		{
-			spdlog::error("Failed to setup patches!");
+			MsgError("Failed to setup patches!\n");
 			return false;
 		}
 
@@ -59,32 +59,32 @@ namespace DriverNG
 		auto PrintModInfo = [](const HF::Win32::Module::Ptr& mod)
 		{
 			if (!mod) {
-				spdlog::error("BAD MODULE");
+				MsgError("BAD MODULE\n");
 				return;
 			}
 
-			spdlog::info("Module: {} base address at {:08x} of size {:08x}", mod->getName(), mod->getBaseAddress(), mod->getSize());
+			MsgInfo("Module: %s base address at 0x%x of size 0x%x\n", mod->getName().c_str(), mod->getBaseAddress(), mod->getSize());
 		};
 
 		m_selfProcess = std::make_shared<HF::Win32::Process>(kProcessName);
 
 		if (!m_selfProcess->isValid())
 		{
-			spdlog::error("Failed to locate {} process", kProcessName);
+			MsgError("Failed to locate '%s' process\n", kProcessName.data());
 			return false;
 		}
 
 		m_selfModule = m_selfProcess->getSelfModule();
 		if (!m_selfModule)
 		{
-			spdlog::error("Failed to locate self module!");
+			MsgError("Failed to locate self module!\n");
 			return false;
 		}
 
 		m_d3d9Module = m_selfProcess->getModule(kDirectX9DllName);
 		if (!m_d3d9Module)
 		{
-			spdlog::error("Failed to locate {} module!", kDirectX9DllName);
+			MsgError("Failed to locate '%s' module!\n", kDirectX9DllName.data());
 			return false;
 		}
 

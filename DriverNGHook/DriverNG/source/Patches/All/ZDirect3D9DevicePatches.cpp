@@ -2,7 +2,7 @@
 #include <Delegates/IDirect3DDelegate.h>
 #include <Patches/All/d3d9_wrap.h>
 
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 
 //-------------------------------------------------------------------------------------------------------------
 //
@@ -52,7 +52,7 @@ namespace Callbacks
     	
         *ppReturnedDeviceInterface = wrappedDevice;
     	
-        spdlog::info("New Wrap D3D Device created {:08X}", reinterpret_cast<std::intptr_t>(device));
+        MsgInfo("New Wrap D3D Device created %x\n", reinterpret_cast<std::intptr_t>(device));
         	
         return result;
     }
@@ -62,7 +62,7 @@ namespace Callbacks
         typedef IDirect3D9* (__stdcall* D3DCreate9FuncType)(UINT);
         auto d3dCreate9Func = (D3DCreate9FuncType)Consts::kDirect3DCreate9JmpAddr;
     	
-        spdlog::info("Direct3DCreate9 captured, SDK version: {:08X}", SDKVersion);
+		MsgInfo("Direct3DCreate9 captured, SDK version: %x\n", SDKVersion);
         IDirect3D9* d3d9factory = d3dCreate9Func(SDKVersion);
     	
         // TODO hook to the CreateDevice
@@ -116,7 +116,7 @@ namespace DriverNG
             // Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::kDirect3DCreate9Addr, kDirect3DCreate9PatchSize))
             {
-                spdlog::error("Failed to cleanup memory");
+                MsgError("Failed to cleanup memory\n");
                 return false;
             }
 
@@ -130,7 +130,7 @@ namespace DriverNG
             if (!m_direct3DCreate9Hook->setup())
             {
                 //m_wintelMouseCtorHook->remove();
-                spdlog::error("Failed to setup patch to Direct3DCreate9!");
+				MsgError("Failed to setup patch to Direct3DCreate9!\n");
                 return false;
             }
 

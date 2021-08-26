@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 #include <Patches/All/OnlinePatches.h>
 #include <details/helpers.hpp>
 #include <filesystem>
@@ -115,7 +115,7 @@ namespace DriverNG
                 return;
             }
 
-            spdlog::error("File read error: {}", file.string());
+			MsgError("File read error: %s\n", file.string().c_str());
         }
     }
 
@@ -130,22 +130,22 @@ namespace DriverNG
 			switch (channel)
 			{
 				case Hermes::LC_error:
-					spdlog::error(msg);
+					MsgError("[Hermes] [error] %s\n", msg);
 					break;
 				case Hermes::LC_warning:
-					spdlog::warn(msg);
+					MsgWarning("[Hermes] [warn] %s\n", msg);
 					break;
 				case Hermes::LC_info:
 				case Hermes::LC_sample:
 				case Hermes::LC_system_info:
 				case Hermes::LC_result:
-					spdlog::info(msg);
+					MsgInfo("[Hermes] %s\n", msg);
 					break;
 				case Hermes::LC_debug1:
-					spdlog::debug(msg);
+					Msg("[Hermes] [DEBUG] %s\n", msg);
 					break;
 				case Hermes::LC_debug2:
-					spdlog::debug("debug2: {}", msg);
+					Msg("[Hermes] [DEBUG 2] %s\n", msg);
 					break;
 			}
 		}
@@ -162,22 +162,30 @@ namespace DriverNG
             {
                 if (fs::is_empty(configPath))
                 {
-                    spdlog::error("{} file not found!", Consts::CONFIG_NAME);
+					MsgError("%s file not found!\n", Consts::CONFIG_NAME);
                     error = true;
                 }
                
             }
             else
             {
-                spdlog::error("{} file is empty!", Consts::CONFIG_NAME);
+				MsgError("%s file is empty!\n", Consts::CONFIG_NAME);
                 error = true;
             }
 
             OnlineConfig config;
             if (!error)
             {
-                NameValuePair<OnlineConfig&> onlineConfig("OnlineConfig", config);
-                Globals::DeserializeFromJsonFile(configPath, onlineConfig);
+				try
+				{
+					NameValuePair<OnlineConfig&> onlineConfig("OnlineConfig", config);
+					Globals::DeserializeFromJsonFile(configPath, onlineConfig);
+				}
+				catch (std::exception& ex)
+				{
+					MsgError("Error loading JSON: %s\n", ex.what());
+					error = true;
+				}
             }
 
             if (!error && config.Use)
@@ -237,7 +245,7 @@ namespace DriverNG
 
             if (!m_SandboxSelectorConstructor->setup())
             {
-                spdlog::error("Failed to initialise hook for SandboxSelector constructor");
+				MsgError("Failed to initialise hook for SandboxSelector constructor\n");
                 return false;
             }
 

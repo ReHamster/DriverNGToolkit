@@ -6,6 +6,7 @@ namespace ReHamster
     {
     public:
 		static void Init();
+		static void Shutdown();
         static int EntryPoint(const void*);
     private:
         enum class GameVersion {

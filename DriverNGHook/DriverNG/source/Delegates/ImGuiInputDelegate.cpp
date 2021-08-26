@@ -4,7 +4,7 @@
 #include <imgui.h>
 #include <memory>
 
-#include "spdlog/spdlog.h"
+#include "cmdlib.h"
 
 // Win32 message handler
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

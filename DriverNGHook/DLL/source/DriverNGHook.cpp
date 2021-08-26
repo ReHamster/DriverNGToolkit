@@ -7,7 +7,7 @@
 
 #include <Windows.h>
 
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 
 namespace ReHamster
 {
@@ -69,6 +69,16 @@ namespace ReHamster
 		}
 	}
 
+	void Core::Shutdown()
+	{
+		if (g_ClientInterface)
+		{
+			g_ClientInterface->OnDestroy();
+			MsgInfo("Core::EntryPoint() shutdown...\n");
+			ReHamster::Logger::Shutdown();
+		}
+	}
+
 	Core::GameVersion Core::TryToDetectGameVersion()
 	{
 		struct VersionDef
@@ -111,9 +121,6 @@ namespace ReHamster
 
 		g_ClientInterface->OnDestroy();
 
-		spdlog::info("Core::EntryPoint() shutdown...");
-
-		ReHamster::Logger::Shutdown();
 
 		return EXIT_SUCCESS;
 	}

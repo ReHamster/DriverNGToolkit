@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include <stdio.h>
 
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 #include <sol/sol.hpp>
 #include <UI/DebugTools.h>
 
@@ -90,6 +90,11 @@ namespace DriverNG
                     callLuaFunction("DSF_RPC_CALL", "s", _Buffer);
                 }
             }
+			else if (_BufferCount == 0x40 && !strcmp(_Format, "%s") && *_Buffer != 0)
+			{
+				// supposed
+				MsgError("[NetZJoinSessionCompleteCallback] %s\n", _Buffer);
+			}
         	
             return ret;
         }
@@ -105,7 +110,7 @@ namespace DriverNG
 	        // Do not revert this patch!
 	        if (!HF::Hook::FillMemoryByNOPs(process, Consts::kOpenScriptLoaderCallAddr, kOpenScriptLoaderPatchSize))
 	        {
-	        	spdlog::error("Failed to cleanup memory");
+				MsgError("Failed to cleanup memory\n");
 	        	return false;
 	        }
 
@@ -118,7 +123,7 @@ namespace DriverNG
 
 	        if (!m_openScriptLoaderHook->setup())
 	        {
-	        	spdlog::error("Failed to setup patch to OpenScriptLoader!");
+				MsgError("Failed to setup patch to OpenScriptLoader!\n");
 	        	return false;
 	        }
 
@@ -127,7 +132,7 @@ namespace DriverNG
             // Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::kStepLuaCallAddress, kStepLuaPatchSize))
             {
-                spdlog::error("Failed to cleanup memory");
+				MsgError("Failed to cleanup memory\n");
                 return false;
             }
 
@@ -140,7 +145,7 @@ namespace DriverNG
 
             if (!m_stepLuaHook->setup())
             {
-                spdlog::error("Failed to setup patch to StepLua!");
+				MsgError("Failed to setup patch to StepLua!\n");
                 return false;
             }
 
@@ -149,7 +154,7 @@ namespace DriverNG
             // Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::kDeleteLuaStateCallAddress, kDeleteLuaStatePatchSize))
             {
-                spdlog::error("Failed to cleanup memory");
+				MsgError("Failed to cleanup memory\n");
                 return false;
             }
 
@@ -162,7 +167,7 @@ namespace DriverNG
 
             if (!m_deleteLuaStateHook->setup())
             {
-                spdlog::error("Failed to setup patch to DeleteLuaState!");
+				MsgError("Failed to setup patch to DeleteLuaState!\n");
                 return false;
             }
 
@@ -171,7 +176,7 @@ namespace DriverNG
 			// Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::ksafe_vsprintfOrigAdress, ksafe_vsprintfPatchSize))
             {
-                spdlog::error("Failed to cleanup memory");
+				MsgError("Failed to cleanup memory\n");
                 return false;
             }
             
@@ -184,7 +189,7 @@ namespace DriverNG
 
             if (!m_safe_vsprintfHook->setup())
             {
-                spdlog::error("Failed to setup patch to safe_sprintf!");
+				MsgError("Failed to setup patch to safe_sprintf!\n");
                 return false;
             }
 

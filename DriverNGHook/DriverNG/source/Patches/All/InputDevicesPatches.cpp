@@ -4,7 +4,7 @@
 #include <Delegates/ILuaDelegate.h>
 
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 #include "dinput_wrap.h"
 
 namespace Consts
@@ -113,7 +113,7 @@ namespace Callbacks
 
     ATOM __stdcall RegisterClassA_Hooked(WNDCLASSA* wndClass)
     {
-        spdlog::info("Window class registered! Event loop function hooked!");
+        MsgInfo("Window class registered! Event loop function hooked!\n");
 
         wndClass->lpfnWndProc = Hamster_WndProc;
         return RegisterClassA(wndClass);
@@ -156,12 +156,12 @@ namespace Callbacks
 
         	if(guid == GUID_SysKeyboard)
         	{
-        		spdlog::info("New Wrap DirectInput Keyboard created {:08X}", reinterpret_cast<std::intptr_t>(device));
+				MsgInfo("New Wrap DirectInput Keyboard created %x\n", reinterpret_cast<std::intptr_t>(device));
                 Globals::g_pKeyboardDevice = wrappedDevice;
         	}
             else if (guid == GUID_SysMouse)
             {
-	            spdlog::info("New Wrap DirectInput Mouse created {:08X}", reinterpret_cast<std::intptr_t>(device));
+				MsgInfo("New Wrap DirectInput Mouse created %x\n", reinterpret_cast<std::intptr_t>(device));
                 Globals::g_pMouseDevice = wrappedDevice;
             }
         	
@@ -198,7 +198,7 @@ namespace DriverNG
             // Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::kRegisterClassAAddr, kRegisterClassAPatchSize))
             {
-                spdlog::error("Failed to cleanup memory");
+                MsgError("Failed to cleanup memory");
                 return false;
             }
 
@@ -211,7 +211,7 @@ namespace DriverNG
 
             if (!m_registerClassAHook->setup())
             {
-                spdlog::error("Failed to setup patch to RegisterClassA!");
+				MsgError("Failed to setup patch to RegisterClassA!\n");
                 return false;
             }
 
@@ -219,7 +219,7 @@ namespace DriverNG
             // Do not revert this patch!
             if (!HF::Hook::FillMemoryByNOPs(process, Consts::k_DirectInput8CreateAddr, kDirectInput8CreateSize))
             {
-                spdlog::error("Failed to cleanup memory");
+				MsgError("Failed to cleanup memory\n");
                 return false;
             }
 
@@ -232,7 +232,7 @@ namespace DriverNG
 
             if (!m_directInput8CreateHook->setup())
             {
-                spdlog::error("Failed to setup patch to DirectInputCreate8!");
+				MsgError("Failed to setup patch to DirectInputCreate8!\n");
                 return false;
             }
 

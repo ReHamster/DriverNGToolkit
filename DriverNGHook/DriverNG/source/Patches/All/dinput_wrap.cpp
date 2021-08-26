@@ -4,7 +4,7 @@
 #include <Delegates/ILuaDelegate.h>
 
 
-#include "spdlog/spdlog.h"
+#include "cmdlib.h"
 
 namespace Globals {
 	DriverNG::ILuaDelegate& g_luaDelegate = DriverNG::ILuaDelegate::GetInstance();

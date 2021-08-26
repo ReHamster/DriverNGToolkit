@@ -1,6 +1,6 @@
 #include <Patches/CommonPatches.h>
 #include <HF/HackingFramework.hpp>
-#include <spdlog/spdlog.h>
+#include <cmdlib.h>
 
 namespace DriverNG
 {
@@ -19,7 +19,7 @@ namespace DriverNG
     {
         if (m_isInited)
         {
-            spdlog::warn("CommonPatches::Setup(). Module is already inited!");
+            MsgWarning("CommonPatches::Setup(). Module is already inited!\n");
             return false;
         }
 
@@ -30,14 +30,14 @@ namespace DriverNG
             {
                 if (!patch->Apply(modPack))
                 {
-                    spdlog::warn("Failed to apply patch {}", patch->GetName());
+					MsgWarning("Failed to apply patch '%s'\n", patch->GetName().data());
                 }
                 else
                 {
-                    spdlog::info("Patch {} applied!", patch->GetName());
+                    MsgInfo("Patch '%s' applied!\n", patch->GetName().data());
                     if (!patch->IsApplied())
                     {
-                        spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE APPLIED BUT IT DOESN'T!", patch->GetName());
+                        MsgError("BAD PATCH IMPLEMENTATION! PATCH '%s' MUST BE APPLIED BUT IT DOESN'T!\n", patch->GetName().data());
                         continue;
                     }
                 }
@@ -63,7 +63,7 @@ namespace DriverNG
 
                 if (patch->IsApplied())
                 {
-                    spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE REVERTED BUT IT DOESN'T!", patch->GetName());
+                    MsgError("BAD PATCH IMPLEMENTATION! PATCH '%s' MUST BE REVERTED BUT IT DOESN'T!\n", patch->GetName().data());
                 }
             }
 

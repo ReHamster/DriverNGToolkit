@@ -1,7 +1,7 @@
 #include <Patches/All/d3d9_wrap.h>
 #include <cassert>
 
-#include "spdlog/spdlog.h"
+#include "cmdlib.h"
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) \

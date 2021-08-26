@@ -5,8 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS=1) #MSVS Stuff
 
-add_subdirectory(Modules/fmt)
-add_subdirectory(Modules/spdlog)
+add_subdirectory(Modules/cmdlib)
 add_subdirectory(Modules/ImGui)
 add_subdirectory(Modules/HF)
 add_subdirectory(Modules/gtest)
@@ -28,7 +27,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(DriverNGHook SHARED ${REHITMAN_SOURCES})
 target_include_directories(DriverNGHook PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/DLL/include)
 
-target_link_libraries(DriverNGHook PUBLIC DriverNGHook::IClient spdlog fmt::fmt)
+target_link_libraries(DriverNGHook PUBLIC DriverNGHook::IClient cmdlib)
 target_link_libraries(DriverNGHook PRIVATE DriverNG ImGui::Core ImGui::DX9)
 
 target_compile_definitions(DriverNGHook PRIVATE)
