@@ -12,13 +12,9 @@ add_subdirectory(Modules/gtest)
 add_subdirectory(Modules/lua)
 add_subdirectory(Modules/luafilesystem)
 add_subdirectory(Modules/sol2)
-add_subdirectory(Modules/cereal)
-
-# add_subdirectory(Hamster)
 
 add_subdirectory(DriverNG)
 add_subdirectory(Client)
-# add_subdirectory(Launcher)
 
 file(GLOB_RECURSE REHITMAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/DLL/source/*.cpp)
 

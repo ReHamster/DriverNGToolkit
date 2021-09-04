@@ -2,15 +2,14 @@
 
 #include <Patches/BasicPatch.h>
 #include <HF/HackingFramework.hpp>
-#include <cereal.hpp>
 
 namespace DriverNG
 {
     class OnlinePatches final : public BasicPatch
     {
-        static constexpr size_t kSandboxSelectorConstructorPatchSize = 10;
+        static constexpr size_t kHermesSetLogCallbackPatchSize = 5;
 
-        HF::Hook::TrampolinePtr<kSandboxSelectorConstructorPatchSize> m_SandboxSelectorConstructor;
+        HF::Hook::TrampolinePtr<kHermesSetLogCallbackPatchSize> m_HermesSetLogCallback;
     public:
         OnlinePatches() = default;
 

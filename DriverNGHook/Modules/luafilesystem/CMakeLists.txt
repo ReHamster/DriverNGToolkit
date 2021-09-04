@@ -9,4 +9,4 @@ add_library(
 )
 
 target_include_directories(luafilesystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(lua)
+target_link_libraries(luafilesystem PUBLIC lua)
