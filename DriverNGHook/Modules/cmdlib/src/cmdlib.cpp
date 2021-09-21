@@ -3,8 +3,20 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string>
+#include <Windows.h>
 
 #pragma warning(disable:4996)
+
+std::wstring GetExePath() 
+{
+	wchar_t buffer[260] = { 0 };
+	GetModuleFileNameW(NULL, buffer, 260);
+	std::wstring::size_type pos = std::wstring(buffer).find_last_of(L"\\/");
+	return std::wstring(buffer).substr(0, pos);
+}
+
+std::wstring g_logFilename;
 
 bool g_logToFile = true;
 
@@ -36,9 +48,9 @@ void SpewMessageToOutput(SpewType_t spewtype,char const* pMsgFormat, va_list arg
 		len = vsnprintf(buff, len+1, pMsgFormat, args);
 	}
 
-	if (g_logToFile)
+	if (g_logToFile && g_logFilename.length() > 0)
 	{
-		FILE* g_logFile = fopen("Driver.log", "a");
+		FILE* g_logFile = _wfopen(g_logFilename.c_str(), L"a");
 
 		if (g_logFile)
 		{
@@ -217,7 +229,8 @@ void fnConDebugSpew(SpewType_t type,const char* text)
 
 void Install_ConsoleSpewFunction()
 {
-	DeleteFileA("Driver.log");
+	g_logFilename = GetExePath() + L"\\Driver.log";
+	DeleteFileW(g_logFilename.c_str());
 
 	SetSpewFunction(fnConDebugSpew);
 	GetInitialColors();
