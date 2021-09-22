@@ -6,6 +6,8 @@
 #include <lfs.h>
 #include "lstate.h"
 
+#define SOL_IMGUI_ENABLE_INPUT_FUNCTIONS
+
 #include <imgui.h>
 #include <sol_imgui/sol_imgui.h>
 #include <imgui_impl_dx9.h>
