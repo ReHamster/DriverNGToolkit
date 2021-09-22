@@ -9,28 +9,46 @@
 
 namespace DriverNG
 {
+	namespace Constants
+	{
+		constexpr int		WAIT_FRAMES = 10;
+	}
+
     namespace Globals
     {
         std::unique_ptr<DebugTools> g_pDebugTools = nullptr;
+		IDirect3DDevice9*			g_d3dDevice = nullptr;
+		HWND						g_focusWindow = nullptr;
+		volatile ImGuiContext*		g_sharedImGui = nullptr;
+
+		volatile bool				g_dataDrawn = false;
+
+		std::mutex					g_drawMutex[2];
     }
 
     void DX9Delegate::OnInitialised(IDirect3DDevice9* device, HWND focusWindow)
     {
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
+		if (!focusWindow)
+			throw std::runtime_error{ "Failed to get HWND!" };
 
-        io.MouseDrawCursor = true;
-        io.MousePos = ImVec2(0.f, 0.f);
-        io.MousePosPrev = io.MousePos;
-        io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+		Globals::g_d3dDevice = device;
+		Globals::g_focusWindow = focusWindow;
 
-        ImGui::StyleColorsDark();
+		Globals::g_sharedImGui = ImGui::CreateContext();
+		
+		Msg("ImGui CreateContext context: %x\n", Globals::g_sharedImGui);
 
-        if (!focusWindow)
-            throw std::runtime_error { "Failed to get HWND!" };
+		ImGuiIO& io = ImGui::GetIO();
 
-        ImGui_ImplWin32_Init(focusWindow);
-        ImGui_ImplDX9_Init(device);
+		io.MouseDrawCursor = true;
+		io.MousePos = ImVec2(0.f, 0.f);
+		io.MousePosPrev = io.MousePos;
+		io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+
+		ImGui::StyleColorsDark();
+
+		ImGui_ImplWin32_Init(Globals::g_focusWindow);
+		ImGui_ImplDX9_Init(Globals::g_d3dDevice);
 
         Globals::g_pDebugTools = std::make_unique<DebugTools>();
     }
@@ -42,24 +60,30 @@ namespace DriverNG
 
     void DX9Delegate::OnEndScene(IDirect3DDevice9* device)
     {
-        ImGui_ImplDX9_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
+		{
+			std::lock_guard g(Globals::g_drawMutex[1]);
 
-        if (Globals::g_pDebugTools)
-        {
-            const bool isDebugToolsVisible = Globals::g_pDebugTools->IsVisible();
+			int waitFrames = 0;
 
-			Globals::g_pDebugTools->Update();
+			while (Globals::g_dataDrawn && waitFrames < Constants::WAIT_FRAMES)
+			{
+				Sleep(1);
+				waitFrames++;
+			}
+		}
 
-            ImGuiIO& io = ImGui::GetIO();
-            io.MouseDrawCursor = isDebugToolsVisible;
-        }
+		{
+			std::lock_guard g(Globals::g_drawMutex[0]);
 
-        ImGui::EndFrame();
+			ImGui::SetCurrentContext((ImGuiContext*)Globals::g_sharedImGui);
+			auto drawData = ImGui::GetDrawData();
 
-        ImGui::Render();
-        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+			if (drawData)
+			{
+				ImGui_ImplDX9_RenderDrawData(drawData);
+				Globals::g_dataDrawn = true;
+			}
+		}
     }
 
     void DX9Delegate::OnDeviceLost()

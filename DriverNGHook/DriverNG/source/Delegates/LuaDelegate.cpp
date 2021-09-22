@@ -2,10 +2,14 @@
 #include <Delegates/LuaDelegate.h>
 #include <cmdlib.h>
 #include <UI/DebugTools.h>
-// #include <imgui.h>
-// #include <sol_imgui/sol_imgui.h>
+
 #include <lfs.h>
 #include "lstate.h"
+
+#include <imgui.h>
+#include <sol_imgui/sol_imgui.h>
+#include <imgui_impl_dx9.h>
+#include <imgui_impl_win32.h>
 
 class LuaAsyncQueue
 {
@@ -118,7 +122,12 @@ namespace DriverNG
 
 	namespace Globals
 	{
-		extern std::unique_ptr<DebugTools> g_pDebugTools;
+		extern std::unique_ptr<DebugTools>	g_pDebugTools;
+
+		extern IDirect3DDevice9*			g_d3dDevice;
+		extern HWND							g_focusWindow;
+		extern volatile ImGuiContext*		g_sharedImGui;
+		extern volatile bool				g_dataDrawn;
 	}
 
 	// TODO: proper exception handling for Lua funcs!
@@ -170,8 +179,9 @@ namespace DriverNG
 		m_gameState = gameState;
 
 		luaopen_lfs(m_gameState);
-
 		sol::state_view sv(m_gameState);
+
+		sol_ImGui::InitBindings(sv);
 
 		const char* cmd = GetCommandLineA();
 		if (strstr(cmd, "-tools") != nullptr)
@@ -238,8 +248,6 @@ namespace DriverNG
 			{
 				m_luaState.script_file(Consts::luaScriptsPath + "autoexec.lua");
 				TryLuaFunction(m_onInit);
-
-				//InitializeGameDevelopmentLib();
 			}
 		}
 
@@ -252,7 +260,7 @@ namespace DriverNG
 			}
 			catch (sol::error& err)
 			{
-				MsgWarning("driverNGConsole.lua failed to load\n");
+				MsgWarning("driverNGConsole.lua failed to load\n%s\n", err.what());
 			}
 		}
 
@@ -265,121 +273,39 @@ namespace DriverNG
 			}
 			catch (sol::error& err)
 			{
-				MsgWarning("game_autoexec.lua failed to load\n");
+				MsgWarning("game_autoexec.lua failed to load\n%s\n", err.what());
 			}
 		}
     }
-
-	void LuaDelegate::InitializeGameDevelopmentLib()
-	{
-		sol::state_view sv(m_gameState);
-
-		sol::table developmentLibTable = sv.create_table();
-
-		developmentLibTable["addGraphics"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["addGraphicsTransform"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["addGraphicsHeading"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["add2DGraphicsTransform"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["add2DGraphicsHeading"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["startDevGraphicsBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["endDevGraphicsBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["removeDevGraphicsBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["dropBatchModelList"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["removeGraphics"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["useDevGraph"] = [this](const sol::table _this, bool enable)
-		{
-		};
-		developmentLibTable["getUseDevGraph"] = [this](const sol::table _this)
-		{
-			return false;
-		};
-		developmentLibTable["setDrawDevGraphicsBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["setDrawGraphics"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["add2DText"] = [this](const sol::table _this, int nID, const std::string& acLabel, const sol::userdata& udPosition, const sol::userdata& udColour, float scale, int unkn )
-		{
-			sol::table tbl = m_luaState["Development"];
-			sol::function add2DTextFunc = tbl["add2DText"];
-
-			TryLuaFunction(add2DTextFunc, tbl, nID, acLabel);
-		};
-		developmentLibTable["add3DText"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["get2DTextSize"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["eraseText"] = [this](const sol::table _this, int nID)
-		{
-			MsgWarning("eraseText: %d\n", nID);
-		};
-		developmentLibTable["startDevTextBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["endDevTextBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["removeDevTextBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["useDevText"] = [this](const sol::table _this, bool enable)
-		{
-		};
-		developmentLibTable["getUseDevText"] = [this](const sol::table _this)
-		{
-			return false;
-		};
-		developmentLibTable["setDrawDevTextBatch"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["setDrawTextElement"] = [this](const sol::table _this, int nID)
-		{
-		};
-		developmentLibTable["clearScreen"] = [this](const sol::table _this, const std::string& acID)
-		{
-			sol::table tbl = m_luaState["Development"];
-			sol::function clearScreenFunc = tbl["clearScreen"];
-
-			TryLuaFunction(clearScreenFunc, tbl, acID);
-		};
-
-		sv["HookDevelopment"] = developmentLibTable;
-
-		// Development:addGraphics(pickerId, "sphere", pickerColor, pickerPosition, cameraHeading, pickerRadiusVec, -1)
-		// Development:removeGraphics(pickerId)
-
-		// Development:add2DText(textID, objectpicker.GetObject(objectIndex), vec.vector(objectListX, yPos, 0, 0), pickedObjectColor, 1, -1)
-		// Development:clearScreen("all")
-		// Development:add2DText(i, lanBrowserMenu.entries[i].name, menuEntry_position, i == selected and selectionColour or textColour, item_scale, -1)
-		// Development:useDevText(true)
-	}
-	
+		
 	void LuaDelegate::DoRenderUpdate()
 	{
 		TryLuaFunction(m_onUpdate);
+	}
+
+	void LuaDelegate::BeginRender()
+	{
+		ImGui::SetCurrentContext((ImGuiContext*)Globals::g_sharedImGui);
+
+		ImGui_ImplDX9_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	void LuaDelegate::EndRender()
+	{
+		if (Globals::g_pDebugTools)
+		{
+			const bool isDebugToolsVisible = Globals::g_pDebugTools->IsVisible();
+
+			Globals::g_pDebugTools->Update();
+
+			ImGuiIO& io = ImGui::GetIO();
+			io.MouseDrawCursor = isDebugToolsVisible;
+		}
+
+		ImGui::EndFrame();
+		ImGui::Render();
 	}
 
 	bool LuaDelegate::IsValidLuaState() const

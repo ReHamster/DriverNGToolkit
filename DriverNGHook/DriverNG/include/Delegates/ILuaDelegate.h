@@ -21,6 +21,9 @@ namespace DriverNG
         virtual void DoCommands() = 0;
         virtual void DoRenderUpdate() = 0;
 
+		virtual void BeginRender() = 0;
+		virtual void EndRender() = 0;
+
         virtual bool IsOnlineGame() = 0;
 
         virtual bool IsDeveloperConsoleAllowed() = 0;

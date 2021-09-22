@@ -15,6 +15,9 @@ namespace DriverNG
         void                                DoRenderUpdate() override;
         bool                                IsOnlineGame() override;
 
+		void								BeginRender() override;
+		void								EndRender() override;
+
         bool                                IsDeveloperConsoleAllowed() override;
 
         sol::protected_function_result      ExecuteString(const std::string& code);

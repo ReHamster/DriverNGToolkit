@@ -28,7 +28,10 @@ namespace DriverNG
 
     namespace Globals
     {
-        extern std::unique_ptr<DebugTools> g_pDebugTools;
+        extern std::unique_ptr<DebugTools>	g_pDebugTools;
+		extern std::mutex					g_drawMutex[2];
+		extern volatile bool				g_dataDrawn;
+
         static ILuaDelegate& g_luaDelegate = ILuaDelegate::GetInstance();
 
     	static void InitializeLuaStateBindings(lua_State* newState)
@@ -59,10 +62,28 @@ namespace DriverNG
             typedef void (*StepLua_t)(lua_State*, bool);
             auto origStepLua = (StepLua_t)Consts::kStepLuaOrigAddress;
 
-            origStepLua(state, paused);
+			{
+				std::lock_guard g(Globals::g_drawMutex[1]);
+				origStepLua(state, paused);
+			}
 
-            // do commands after
-            Globals::g_luaDelegate.DoCommands();
+			auto callLuaFunc = Globals::g_luaDelegate.GetCallLuaFunction();
+
+			if (callLuaFunc && state)
+			{
+				std::lock_guard g(Globals::g_drawMutex[0]);
+
+				Globals::g_dataDrawn = false;
+
+				Globals::g_luaDelegate.BeginRender();
+
+				callLuaFunc("ImGui_RenderUpdate", ">");
+
+				Globals::g_luaDelegate.EndRender();
+			}
+
+			// do commands after
+			Globals::g_luaDelegate.DoCommands();
         }
 
         void DeleteLuaState_Hooked(lua_State* state)
