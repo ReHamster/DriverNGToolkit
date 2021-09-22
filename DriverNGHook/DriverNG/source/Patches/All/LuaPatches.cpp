@@ -63,7 +63,7 @@ namespace DriverNG
             auto origStepLua = (StepLua_t)Consts::kStepLuaOrigAddress;
 
 			{
-				std::lock_guard g(Globals::g_drawMutex[1]);
+				//std::lock_guard g(Globals::g_drawMutex[1]);
 				origStepLua(state, paused);
 			}
 

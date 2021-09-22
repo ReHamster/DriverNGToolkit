@@ -61,7 +61,7 @@ namespace DriverNG
     void DX9Delegate::OnEndScene(IDirect3DDevice9* device)
     {
 		{
-			std::lock_guard g(Globals::g_drawMutex[1]);
+			//std::lock_guard g(Globals::g_drawMutex[1]);
 
 			int waitFrames = 0;
 
