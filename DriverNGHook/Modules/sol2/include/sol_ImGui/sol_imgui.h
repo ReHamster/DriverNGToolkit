@@ -1829,8 +1829,7 @@ namespace sol_ImGui
             "NoUndoRedo"			, ImGuiInputTextFlags_NoUndoRedo,
             "CharsScientific"		, ImGuiInputTextFlags_CharsScientific,
             "CallbackResize"		, ImGuiInputTextFlags_CallbackResize,
-            "Multiline"				, ImGuiInputTextFlags_Multiline,
-            "NoMarkEdited"			, ImGuiInputTextFlags_NoMarkEdited
+            "CallbackEdit"			, ImGuiInputTextFlags_CallbackEdit
         );
 #pragma endregion InputText Flags
 
@@ -1862,12 +1861,12 @@ namespace sol_ImGui
             "InputRGB"				, ImGuiColorEditFlags_InputRGB,
             "InputHSV"				, ImGuiColorEditFlags_InputHSV,
 
-            "_OptionsDefault"		, ImGuiColorEditFlags__OptionsDefault,
+            "DefaultOptions_"		, ImGuiColorEditFlags_DefaultOptions_,
 
-            "_DisplayMask"			, ImGuiColorEditFlags__DisplayMask,
-            "_DataTypeMask"			, ImGuiColorEditFlags__DataTypeMask,
-            "_PickerMask"			, ImGuiColorEditFlags__PickerMask,
-            "_InputMask"			, ImGuiColorEditFlags__InputMask,
+            "DisplayMask_"			, ImGuiColorEditFlags_DisplayMask_,
+            "DataTypeMask_"			, ImGuiColorEditFlags_DataTypeMask_,
+            "PickerMask_"			, ImGuiColorEditFlags_PickerMask_,
+            "InputMask_"			, ImGuiColorEditFlags_InputMask_,
 
             "RGB"					, ImGuiColorEditFlags_RGB
         );
