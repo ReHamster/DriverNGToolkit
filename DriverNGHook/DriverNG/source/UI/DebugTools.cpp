@@ -57,7 +57,8 @@ namespace DriverNG
     	}
     	*/
 
-        Internals::g_luaDelegate.DoRenderUpdate();
+        if (!Internals::g_luaDelegate.IsDeveloperConsoleAllowed())
+            return;
 
         auto callLuaFunction = Internals::g_luaDelegate.GetCallLuaFunction();
         if (!callLuaFunction)
@@ -142,7 +143,7 @@ namespace DriverNG
 
     void DebugTools::ToggleVisibility()
     {
-        if (!m_bIsVisible && !Internals::g_luaDelegate.IsDeveloperConsoleAllowed())
+        if (!m_bIsVisible)
         {
             return;
         }
@@ -150,17 +151,19 @@ namespace DriverNG
         m_bIsTitleVisible = false;
         m_bIsVisible = !m_bIsVisible;
 
-        if (m_bIsVisible)
+        if (Internals::g_luaDelegate.IsDeveloperConsoleAllowed())
         {
-            if (m_activeWidgetID == WidgetID::CONSOLE)
-                m_console.OnEnable();
+            if (m_bIsVisible)
+            {
+                if (m_activeWidgetID == WidgetID::CONSOLE)
+                    m_console.OnEnable();
+            }
+            else
+            {
+                if (m_activeWidgetID == WidgetID::CONSOLE)
+                    m_console.OnDisable();
+            }
         }
-        else
-        {
-            if (m_activeWidgetID == WidgetID::CONSOLE)
-                m_console.OnDisable();
-        }
-
     }
 
     bool DebugTools::IsVisible() const

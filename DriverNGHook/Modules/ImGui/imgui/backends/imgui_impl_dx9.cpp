@@ -368,6 +368,6 @@ void ImGui_ImplDX9_NewFrame()
     ImGui_ImplDX9_Data* bd = ImGui_ImplDX9_GetBackendData();
     IM_ASSERT(bd != NULL && "Did you call ImGui_ImplDX9_Init()?");
 
-    if (!bd->FontTexture)
+    if (bd && !bd->FontTexture)
         ImGui_ImplDX9_CreateDeviceObjects();
 }

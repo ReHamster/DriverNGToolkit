@@ -309,6 +309,9 @@ void    ImGui_ImplWin32_NewFrame()
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
     IM_ASSERT(bd != NULL && "Did you call ImGui_ImplWin32_Init()?");
 
+    if(!bd)
+        return;
+
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect = { 0, 0, 0, 0 };
     ::GetClientRect(bd->hWnd, &rect);

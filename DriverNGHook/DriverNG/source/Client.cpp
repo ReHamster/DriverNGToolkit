@@ -107,17 +107,7 @@ namespace DriverNG
 	{
 		m_patches->RegisterPatch<LuaPatches>();
 		m_patches->RegisterPatch<OnlinePatches>();
-
-		const char* cmd = GetCommandLineA();
-
-		if (strstr(cmd, "-tools") != nullptr)
-		{
-			m_patches->RegisterPatch<Direct3D9DevicePatches>(std::make_unique<DX9Delegate>());
-			m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
-		}
-		else
-		{
-			m_patches->RegisterPatch<InputDevicesPatches>();
-		}
+		m_patches->RegisterPatch<Direct3D9DevicePatches>(std::make_unique<DX9Delegate>());
+		m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
 	}
 }

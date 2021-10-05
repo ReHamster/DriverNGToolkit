@@ -222,16 +222,6 @@ namespace DriverNG
 			m_luaState.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
 			//sol_ImGui::InitBindings(m_luaState);
 
-			m_luaState["registerForEvent"] = [this](const std::string& acName, sol::function aCallback)
-			{
-				if (acName == "onInit")
-					m_onInit = aCallback;
-				else if (acName == "onUpdate")
-					m_onUpdate = aCallback;
-				else
-					MsgError("Tried to register an unknown event '%s'!\n", acName.c_str());
-			};
-
 			m_luaState["allowCustomGameScripts"] = [this](bool enable)
 			{
 				if (enable)
@@ -249,7 +239,6 @@ namespace DriverNG
 			// Driver NG hook internals
 			{
 				m_luaState.script_file(Consts::luaScriptsPath + "autoexec.lua");
-				TryLuaFunction(m_onInit);
 			}
 		}
 
@@ -280,11 +269,6 @@ namespace DriverNG
 		}
     }
 		
-	void LuaDelegate::DoRenderUpdate()
-	{
-		TryLuaFunction(m_onUpdate);
-	}
-
 	void LuaDelegate::BeginRender()
 	{
 		ImGui::SetCurrentContext((ImGuiContext*)Globals::g_sharedImGui);

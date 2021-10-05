@@ -12,7 +12,6 @@ namespace DriverNG
         void                                OnDeleted() override;
 
         void                                DoCommands() override;
-        void                                DoRenderUpdate() override;
         bool                                IsOnlineGame() override;
 
 		void								BeginRender() override;
@@ -38,9 +37,6 @@ namespace DriverNG
         lua_State* m_gameState;
 
         sol::state m_luaState;
-
-        sol::function m_onInit{ };
-        sol::function m_onUpdate{ };
 
         bool m_allowCustomGameScripts{ false };
         bool m_allowDeveloperConsole{ false };
