@@ -1,5 +1,6 @@
-cmake-build*
-build
-.idea
-.vscode
-.vs
+project_vs**/
+bin/
+*.idea
+*.vscode
+*.vs
+*.exe
