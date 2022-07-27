@@ -193,22 +193,28 @@ namespace DriverNG
 		}
 
 		// install our print function to the game
-		sv["print"] = [](sol::variadic_args aArgs, sol::this_state aState)
+		sv["print"] = [](sol::variadic_args args, sol::this_state aState)
 		{
 			std::ostringstream oss;
 			sol::state_view s(aState);
+			auto toString = s["tostring"];
 
-			for (auto it = aArgs.cbegin(); it != aArgs.cend(); ++it)
+			MsgInfo("[Lua] ");
+			
+			for (auto it = args.cbegin(); it != args.cend(); ++it)
 			{
-				if (it != aArgs.cbegin())
+				if (it != args.cbegin())
 				{
 					oss << " ";
+					MsgInfo(" ");
 				}
-				std::string str = s["tostring"]((*it).get<sol::object>());
+
+				std::string str = ((*it).get_type() == sol::type::string) ? (*it).get<std::string>() : toString((*it).get<sol::object>());
+
+				MsgInfo(str.c_str());
 				oss << str;
 			}
-
-			MsgInfo("[Lua] %s\n", oss.str().c_str());
+			MsgInfo("\n");
 
 			if(Globals::g_pDebugTools)
 				Globals::g_pDebugTools->LogGameToConsole(oss.str());
