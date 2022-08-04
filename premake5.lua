@@ -34,6 +34,7 @@ workspace "DriverNGHook"
             "NDEBUG",
         }
 		optimize "On"
+		symbols "On"
 		-- enableASAN "On"
 
 group "Dependencies"
@@ -45,6 +46,8 @@ group "Main"
 
 project "DriverNGHook"
     kind "SharedLib"
+	targetextension ".asi"	-- can be used with Ultimate ASI loader
+
     files {
         "DriverNGHook/**.cpp",
         "DriverNGHook/**.h",

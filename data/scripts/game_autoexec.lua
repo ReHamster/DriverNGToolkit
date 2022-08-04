@@ -88,6 +88,48 @@ function _user_open(filename)
 end
 
 -------------------------------------------------------------------------------------------
+
+local function hookImGui_errorHandler( errobj )
+	print(debug.traceback())
+	print("error in ImGui update function - ", errobj)
+	return false
+end
+
+-- adds new update function for ImGui (to draw widget or menu etc)
+local function hookImGui_AddUpdate(name, func, displayAlways)
+	if displayAlways == nil then
+		displayAlways = false
+	end
+	
+	if driverNGHook.imGuiFuncs == nil then
+		driverNGHook.imGuiFuncs = {}
+	end
+
+	driverNGHook.imGuiFuncs[name] = {
+		func = func, 
+		displayAlways = displayAlways
+	}
+end
+
+-- remove update function for ImGui
+local function hookImGui_RemoveUpdate(name)
+	if driverNGHook.imGuiFuncs == nil then
+		driverNGHook.imGuiFuncs = {}
+	end
+
+	driverNGHook.imGuiFuncs[name] = nil
+end
+
+-- called from C++
+local function hookImGui_Update()
+	for k,upd in pairs(driverNGHook.imGuiFuncs) do
+		if upd.displayAlways or driverNGHook.gamePaused then
+			xpcall(upd.func, hookImGui_errorHandler)
+		end
+	end
+end
+
+-------------------------------------------------------------------------------------------
 -- self-reloading
 
 -- TODO: search for MODS folders and ModInit.lua
@@ -115,7 +157,8 @@ local function checkLoadBootstrapper()
 end
 
 local function overrideGameLauncher()
-	dofile(DNGHookScriptPath .. "driverNGGameLauncher.lua")
+	dofile(DNGHookScriptPath.. "driverNGDevelopmentLib.lua")
+	dofile(DNGHookScriptPath.. "driverNGGameLauncher.lua")
 	removeUserUpdateFunction("overrideGameLauncher")
 
 	addUserUpdateFunction("userBootstrapper", checkLoadBootstrapper, 120)
@@ -139,7 +182,10 @@ end
 local ReadOnly = {
 	open = _open,
 	user_open = _user_open,
-	launchScripts = hookLaunchScripts
+	launchScripts = hookLaunchScripts,
+	ImGui_RenderUpdate = hookImGui_Update,
+	ImGui_AddUpdateFunction = hookImGui_AddUpdate,
+	ImGui_RemoveUpdateFunction = hookImGui_RemoveUpdate
 }
 
 print("System overrides added")

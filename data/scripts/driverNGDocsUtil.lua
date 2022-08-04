@@ -19,7 +19,8 @@ local EngineFuncs = {
 			luaDocData[libraryName] = {}
 		end
 
-		table.insert(luaDocData[libraryName], "function " .. functionName .. "   :  " .. functionDocs)
+		-- type, name, docs
+		table.insert(luaDocData[libraryName], {"function", functionName, functionDocs})
 	end,
 
 	AddLuaPropertyDocumentation = function(libraryName, propertyName, propertyDocs)
@@ -27,11 +28,12 @@ local EngineFuncs = {
 			luaDocData[libraryName] = {}
 		end
 
-		table.insert(luaDocData[libraryName], "property " .. propertyName .. "  :  " .. propertyDocs)
+		-- type, name, docs
+		table.insert(luaDocData[libraryName], {"property", propertyName, propertyDocs} )
 	end,
 }
 
-luaHelp = function( libraryName )
+luaHelp = function()
 	local oldFuncs = {}
 
 	-- prepare
@@ -52,7 +54,7 @@ luaHelp = function( libraryName )
 	end
 	
 	-- print
-	if libraryName ~= nil then
+	--[[if libraryName ~= nil then
 		util.printObject(luaDocData[libraryName])
 	else
 		-- only library names
@@ -61,7 +63,7 @@ luaHelp = function( libraryName )
 			table.insert(libraryNames, "library '" .. k .. "'")
 		end
 		util.printObject(libraryNames)
-	end
+	end]]
 	
 	-- restore
 	if not Documentation.init then
@@ -72,4 +74,44 @@ luaHelp = function( libraryName )
 		LuaDocumentation_AddLuaFunctionDocumentation = oldFuncs.LuaDocumentation_AddLuaFunctionDocumentation
 		LuaDocumentation_AddLuaPropertyDocumentation = oldFuncs.LuaDocumentation_AddLuaPropertyDocumentation
 	end
+	
+	local function DrawDocs()
+		ImGui.SetNextWindowSize(500, 400, ImGuiCond.FirstUseEver)
+		if ImGui.Begin("Lua documentation") then
+			if ImGui.Button("Hide") then
+				ImGui_RemoveUpdateFunction("LuaDocs")
+			end
+			for name,tbl in pairs(luaDocData) do
+				if ImGui.CollapsingHeader(name) then
+									
+					if ImGui.BeginTable("table1", 3) then
+					
+						ImGui.TableSetupColumn("Type", 0, 0.1)
+						ImGui.TableSetupColumn("Name", 0, 0.25)
+						ImGui.TableSetupColumn("Description", 0, 1.25)
+						ImGui.TableHeadersRow()
+					
+						for i,mem_desc in pairs(tbl) do		
+							ImGui.TableNextRow();
+
+							ImGui.TableSetColumnIndex(0)
+							ImGui.Text(mem_desc[1])
+							
+							ImGui.TableSetColumnIndex(1)
+							ImGui.Text(mem_desc[2])
+							
+							ImGui.TableSetColumnIndex(2)
+							ImGui.Text(mem_desc[3])
+
+						end
+						ImGui.EndTable()
+					end
+				end
+			end
+			ImGui.End()
+		end
+	end
+
+	ImGui_AddUpdateFunction("LuaDocs", DrawDocs) -- true if you want to display it always on screen
 end
+

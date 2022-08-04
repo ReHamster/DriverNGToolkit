@@ -1,7 +1,6 @@
 dofile(DNGHookScriptPath.. "driverNGUtil.lua")
 dofile(DNGHookScriptPath.. "driverNGDocsUtil.lua")
 
-
 -- this is called from the hook via CallLuaFunction
 function driverNGHook_EvalHelper(luaExprStr)	
 
@@ -11,17 +10,23 @@ function driverNGHook_EvalHelper(luaExprStr)
 		luaExprStr = "util.printObject(" .. luaExprStr:sub(2) .. ")"
 	end
 
-	local f, err = loadstring(luaExprStr)
-	if not f then
-		print("ERROR: `" .. err .. "`")
-	else
-		local ran, errorMsg = pcall( f )
-		
-		if not ran then
-			print("ERROR: " .. errorMsg)
-			print(debug.traceback())
+	function evaluator()
+		removeUserUpdateFunction("hookConsoleEvaluator")
+		local f, err = loadstring(luaExprStr)
+		if not f then
+			print("ERROR: `" .. err .. "`")
+		else
+			local ran, errorMsg = pcall( f )
+			
+			if not ran then
+				print("ERROR: " .. errorMsg)
+				print(debug.traceback())
+			end
 		end
 	end
+	
+	-- add to game thread to ensure safety
+	addUserUpdateFunction("hookConsoleEvaluator", evaluator, 120)
 end
 
 -- called from hook
