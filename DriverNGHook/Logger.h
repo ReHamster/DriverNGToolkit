@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 
 namespace ReHamster
 {
@@ -9,7 +9,7 @@ namespace ReHamster
     public:
         static void Setup();
         static void Shutdown();
-        static void Assert(bool condition, std::string_view function, std::string_view file, unsigned int line, std::string_view message, std::string_view condition_str);
+        static void Assert(bool condition, const std::string& function, const std::string& file, unsigned int line, const std::string& message, const std::string& condition_str);
     };
 }
 

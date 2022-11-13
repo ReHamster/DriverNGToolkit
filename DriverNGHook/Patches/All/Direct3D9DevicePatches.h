@@ -18,7 +18,7 @@ namespace DriverNG
     public:
         explicit Direct3D9DevicePatches(std::unique_ptr<IDirect3DDelegate>&& delegate);
 
-        [[nodiscard]] std::string_view GetName() const override;
+        const char* GetName() const override;
         bool Apply(const ModPack& modules) override;
         void Revert(const ModPack& modules) override;
     };

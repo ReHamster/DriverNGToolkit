@@ -18,7 +18,7 @@ namespace DriverNG
         InputDevicesPatches() = default;
         explicit InputDevicesPatches(std::unique_ptr<IInputDelegate>&& delegate);
 
-        std::string_view GetName() const override;
+        const char* GetName() const override;
         bool Apply(const ModPack& modules) override;
         void Revert(const ModPack& modules) override;
     };

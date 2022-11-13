@@ -4,9 +4,9 @@
 
 #include <Windows.h>
 #include <stdio.h>
-
+#include <mutex>
 #include <sol/sol.hpp>
-#include <UI/DebugTools.h>
+#include "Delegates/IInputDelegate.h"
 
 namespace DriverNG
 {
@@ -28,7 +28,7 @@ namespace DriverNG
 
     namespace Globals
     {
-        extern std::unique_ptr<DebugTools>	g_pDebugTools;
+        extern std::unique_ptr<IInputDelegate> g_pInputDelegate;
 		extern std::mutex					g_drawMutex[2];
 		extern volatile bool				g_dataDrawn;
 
@@ -77,7 +77,9 @@ namespace DriverNG
 
 				Globals::g_luaDelegate.BeginRender();
 
-				callLuaFunc("ImGui_RenderUpdate", ">");
+                bool shouldBlockUI = false;
+				callLuaFunc("ImGui_RenderUpdate", ">b", &shouldBlockUI);
+                Globals::g_pInputDelegate->setGameInputBlocked(shouldBlockUI);
 
 				Globals::g_luaDelegate.EndRender();
 			}
@@ -121,7 +123,7 @@ namespace DriverNG
         }
     }
 
-    std::string_view LuaPatches::GetName() const { return "Lua Patch"; }
+    const char* LuaPatches::GetName() const { return "Lua Patch"; }
 	
     bool LuaPatches::Apply(const ModPack& modules)
     {

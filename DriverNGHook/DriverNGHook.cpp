@@ -9,6 +9,7 @@
 namespace ReHamster
 {
 	Client::IClient* g_ClientInterface = nullptr;
+	CrashHandlerReporter crashHandlerReporter;
 
 	Client::IClient* CreateClientInterface()
 	{
@@ -55,6 +56,8 @@ namespace ReHamster
 			return;
 		}
 
+		crashHandlerReporter.Install();
+
 		if (!g_ClientInterface->OnAttach())
 		{
 			RH_ASSERT2(g_ClientInterface->OnAttach(), "g_ClientInterface->OnAttach() failed! See console for details!");
@@ -80,7 +83,7 @@ namespace ReHamster
 	{
 		struct VersionDef
 		{
-			std::string_view Id;
+			std::string Id;
 			std::intptr_t StrAddr;
 		};
 
@@ -95,7 +98,7 @@ namespace ReHamster
 		{
 			if (versionInfo.StrAddr == kUnknownAddr) continue; // SKip, unable to check it
 
-			const auto valueInGame = std::string_view{ reinterpret_cast<const char*>(versionInfo.StrAddr) };
+			const std::string valueInGame = reinterpret_cast<const char*>(versionInfo.StrAddr);
 			if (valueInGame == versionInfo.Id)
 				return gameVersion;
 		}
@@ -107,8 +110,6 @@ namespace ReHamster
 	{
 		if (!g_ClientInterface)
 			return EXIT_FAILURE;
-
-		CrashHandlerReporter crashHandlerReporter;
 
 		g_ClientInterface->Run();
 

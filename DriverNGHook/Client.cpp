@@ -13,8 +13,8 @@
 
 namespace DriverNG
 {
-	static constexpr std::string_view kDirectX9DllName = "d3d9.dll";
-	static constexpr std::string_view kProcessName = "Driver.exe";
+	static constexpr const char* kDirectX9DllName = "d3d9.dll";
+	static constexpr const char* kProcessName = "Driver.exe";
 
 	bool Client::OnAttach()
 	{
@@ -64,11 +64,11 @@ namespace DriverNG
 			MsgInfo("Module: %s base address at 0x%x of size 0x%x\n", mod->getName().c_str(), mod->getBaseAddress(), mod->getSize());
 		};
 
-		m_selfProcess = std::make_shared<HF::Win32::Process>(kProcessName);
+		m_selfProcess = std::make_shared<HF::Win32::Process>(std::string(kProcessName));
 
 		if (!m_selfProcess->isValid())
 		{
-			MsgError("Failed to locate '%s' process\n", kProcessName.data());
+			MsgError("Failed to locate '%s' process\n", kProcessName);
 			return false;
 		}
 
@@ -82,7 +82,7 @@ namespace DriverNG
 		m_d3d9Module = m_selfProcess->getModule(kDirectX9DllName);
 		if (!m_d3d9Module)
 		{
-			MsgError("Failed to locate '%s' module!\n", kDirectX9DllName.data());
+			MsgError("Failed to locate '%s' module!\n", kDirectX9DllName);
 			return false;
 		}
 

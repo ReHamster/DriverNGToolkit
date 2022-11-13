@@ -5,10 +5,12 @@
 
 #include "ReHamster.h"
 #include "CrashHandlerReporter.h"
+#include "Logger.h"
 
 #ifndef _WIN32
 #error "Supported only x86"
 #endif
+
 
 class CDynInitializer
 {
@@ -22,8 +24,6 @@ public:
 	{
 		ReHamster::Core::Shutdown();
 	}
-
-	ReHamster::CrashHandlerReporter crashHandlerReporter;
 };
 static CDynInitializer s_initializer;
 

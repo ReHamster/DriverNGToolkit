@@ -40,6 +40,12 @@ namespace DriverNG
 		static constexpr uintptr_t kHermesLogCallbackAddr = 0x016DB558;
     }
 
+	namespace Global
+	{
+		static Hermes::LogCallback& hermesLogCallbackVar = *reinterpret_cast<Hermes::LogCallback*>(Consts::kHermesLogCallbackAddr);
+		static Hermes::LogCallback alcatrazHermesLogCallback = nullptr;
+	}
+
     namespace Callbacks
     {
         using std::filesystem::directory_iterator;
@@ -69,20 +75,26 @@ namespace DriverNG
 					Msg("[Hermes] [DEBUG 2] %s\n", msg);
 					break;
 			}
+
+			if (Global::alcatrazHermesLogCallback) {
+				Global::alcatrazHermesLogCallback(channel, msg);
+			}
 		}
 
 		Hermes::LogCallback __cdecl HermesSetLogCallback(Hermes::LogCallback fn)
         {
 			// set ours log callback instead
-			Hermes::LogCallback* hermesLogCallback = (Hermes::LogCallback*)Consts::kHermesLogCallbackAddr;
+			Hermes::LogCallback oldHermesLogCallback = Global::hermesLogCallbackVar;
 
-			*hermesLogCallback = OnlineLogCallback;
-			return OnlineLogCallback;
+			Global::alcatrazHermesLogCallback = oldHermesLogCallback;
+
+			Global::hermesLogCallbackVar = OnlineLogCallback;
+			return oldHermesLogCallback;
         }
     }
 
 
-    std::string_view OnlinePatches::GetName() const { return "Online patch"; }
+    const char* OnlinePatches::GetName() const { return "Online patch"; }
 	
     bool OnlinePatches::Apply(const ModPack& modules)
     {

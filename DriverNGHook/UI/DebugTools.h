@@ -25,7 +25,7 @@ namespace DriverNG
         void OnDisable();
 
         void ToggleVisibility();
-        [[nodiscard]] bool IsVisible() const;
+        bool IsVisible() const;
 
         void LogGameToConsole(const std::string& acpText);
 

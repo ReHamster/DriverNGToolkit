@@ -16,11 +16,11 @@ namespace ReHamster
     }
 
     void Logger::Assert(bool condition,
-                        std::string_view function,
-                        std::string_view file,
+                        const std::string& function,
+                        const std::string& file,
                         unsigned int line,
-                        std::string_view message,
-                        std::string_view condition_str)
+                        const std::string& message,
+                        const std::string& condition_str)
     {
         if (!condition)
         {

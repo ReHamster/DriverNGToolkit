@@ -13,7 +13,7 @@ namespace DriverNG
     public:
         OnlinePatches() = default;
 
-        std::string_view GetName() const override;
+        const char* GetName() const override;
         bool Apply(const ModPack& modules) override;
         void Revert(const ModPack& modules) override;
     };

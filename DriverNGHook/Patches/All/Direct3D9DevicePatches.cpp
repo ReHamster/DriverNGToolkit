@@ -79,11 +79,6 @@ namespace Globals
 {
     static std::unique_ptr<HF::Hook::VFHook<IDirect3D9>>        g_Direct3D_CreateDevice_Hook{ nullptr };
 
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>>  g_Direct3DDevice_Present_Hook{ nullptr };
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>>  g_Direct3DDevice_BeginScene_Hook { nullptr };
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>>  g_Direct3DDevice_EndScene_Hook { nullptr };
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>>  g_Direct3DDevice_Reset_Hook { nullptr };
-
     static void SetupD3DFactoryHooks(IDirect3D9* factory)
     {
         g_Direct3D_CreateDevice_Hook = HF::Hook::HookVirtualFunction<IDirect3D9, Consts::D3DAPIVFTableIndex::CreateDevice>(factory, &Callbacks::D3D_CreateDevice);
@@ -101,7 +96,7 @@ namespace DriverNG
         Globals::g_pDelegate = std::move(delegate);
     }
 
-    std::string_view Direct3D9DevicePatches::GetName() const
+    const char* Direct3D9DevicePatches::GetName() const
     {
         return "D3D9 Hooking Patch";
     }
@@ -146,8 +141,5 @@ namespace DriverNG
 
         Globals::g_pDelegate = nullptr;
         Globals::g_Direct3D_CreateDevice_Hook.reset(nullptr);
-        Globals::g_Direct3DDevice_BeginScene_Hook.reset(nullptr);
-        Globals::g_Direct3DDevice_EndScene_Hook.reset(nullptr);
-        Globals::g_Direct3DDevice_Reset_Hook.reset(nullptr);
     }
 }

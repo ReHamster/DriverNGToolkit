@@ -59,6 +59,13 @@ void WriteMiniDump(EXCEPTION_POINTERS* exception = nullptr)
 
 void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
 {
+    MessageBox(
+        NULL,
+        "We got an fatal error.\nMinidump will be saved near exe.\nMore details in dev console.",
+        "Driver San Francisco | DriverNGHook",
+        MB_ICONERROR | MB_OK
+    );
+
     MsgError("******************************************************************************\n");
     MsgError("                                 FATAL ERROR!								  \n");
     MsgError("******************************************************************************\n");
@@ -76,13 +83,6 @@ void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
     MsgError("             EIP : 0x%x\n", exceptionInfoFrame->ContextRecord->Eip);
     MsgError("             ESP : 0x%x\n", exceptionInfoFrame->ContextRecord->Esp);
     MsgError("******************************************************************************\n");
-
-    MessageBox(
-            NULL,
-            "We got an fatal error.\nMinidump will be saved near exe.\nMore details in dev console.",
-            "Driver San Francisco | DriverNGHook",
-            MB_ICONERROR | MB_OK
-    );
 
     WriteMiniDump(exceptionInfoFrame);
 }
@@ -111,11 +111,29 @@ namespace ReHamster
 {
     CrashHandlerReporter::CrashHandlerReporter()
     {
+    }
+
+    void PureCallhandler(void)
+    {
+        MessageBox(
+            NULL,
+            "We got an fatal error.\nMinidump will be saved near exe.\nMore details in dev console.",
+            "Driver San Francisco | DriverNGHook",
+            MB_ICONERROR | MB_OK
+        );
+    }
+
+    void CrashHandlerReporter::Install()
+    {
+        _set_purecall_handler(PureCallhandler);
         m_prevHandler = reinterpret_cast<std::intptr_t>(SetUnhandledExceptionFilter(ExceptionFilterWin32));
     }
 
     CrashHandlerReporter::~CrashHandlerReporter()
     {
+        if (m_prevHandler == 0)
+            return;
+
         SetUnhandledExceptionFilter(reinterpret_cast<LPTOP_LEVEL_EXCEPTION_FILTER>(m_prevHandler));
         if (!AddVectoredExceptionHandler(0UL, VectoredExceptionHandlerWin32))
         {

@@ -212,7 +212,7 @@ namespace HF
                 return m_valid;
             }
 
-            [[nodiscard]] Module::Ptr getModule(const std::string& name) const
+            [[nodiscard]] Module::Ptr getModule(const char* name) const
             {
                 auto it = m_modules.find(name);
                 if (it != std::end(m_modules))
@@ -222,18 +222,12 @@ namespace HF
                 return nullptr;
             }
 
-            [[nodiscard]] Module::Ptr getModule(std::string_view name) const
-            {
-                //TODO: Rewrite to std::string_view?
-                return getModule(std::string(name));
-            }
-
             [[nodiscard]] Module::Ptr getSelfModule() const
             {
                 if (!m_valid)
                     return nullptr;
 
-                if (!m_modules.contains(m_name))
+                if (!m_modules.count(m_name))
                     return nullptr;
 
                 return m_modules.at(m_name);

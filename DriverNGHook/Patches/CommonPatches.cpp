@@ -30,14 +30,14 @@ namespace DriverNG
             {
                 if (!patch->Apply(modPack))
                 {
-					MsgWarning("Failed to apply patch '%s'\n", patch->GetName().data());
+					MsgWarning("Failed to apply patch '%s'\n", patch->GetName());
                 }
                 else
                 {
-                    MsgInfo("Patch '%s' applied!\n", patch->GetName().data());
+                    MsgInfo("Patch '%s' applied!\n", patch->GetName());
                     if (!patch->IsApplied())
                     {
-                        MsgError("BAD PATCH IMPLEMENTATION! PATCH '%s' MUST BE APPLIED BUT IT DOESN'T!\n", patch->GetName().data());
+                        MsgError("BAD PATCH IMPLEMENTATION! PATCH '%s' MUST BE APPLIED BUT IT DOESN'T!\n", patch->GetName());
                         continue;
                     }
                 }
@@ -63,7 +63,7 @@ namespace DriverNG
 
                 if (patch->IsApplied())
                 {
-                    MsgError("BAD PATCH IMPLEMENTATION! PATCH '%s' MUST BE REVERTED BUT IT DOESN'T!\n", patch->GetName().data());
+                    MsgError("BAD PATCH IMPLEMENTATION! PATCH '%s' MUST BE REVERTED BUT IT DOESN'T!\n", patch->GetName());
                 }
             }
 

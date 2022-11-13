@@ -5,7 +5,7 @@ namespace ReHamster
 {
     volatile bool DebugConsole::g_bIsCreated = false;
 
-    void DebugConsole::Create(std::string_view caption)
+    void DebugConsole::Create(const std::string& caption)
     {
         if (g_bIsCreated || caption.empty())
             return;

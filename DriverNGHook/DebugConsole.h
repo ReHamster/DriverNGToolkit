@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 
 namespace ReHamster
 {
@@ -8,6 +8,6 @@ namespace ReHamster
     {
         static volatile bool g_bIsCreated;
     public:
-        static void Create(std::string_view caption);
+        static void Create(const std::string& caption);
     };
 }

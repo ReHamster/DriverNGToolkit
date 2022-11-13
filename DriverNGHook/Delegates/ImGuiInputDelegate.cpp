@@ -43,9 +43,9 @@ namespace DriverNG
     {
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 
-    	if(Globals::g_pDebugTools)
-            return !Globals::g_pDebugTools->IsVisible();
+        if (Globals::g_pDebugTools && Globals::g_pDebugTools->IsVisible())
+            return false;
     
-        return true;
+        return IInputDelegate::onWindowsEvent(hWnd, msg, wParam, lParam);
     }
 }

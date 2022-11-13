@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <string_view>
+#include <string>
 
 #include "Patches/ModPack.h"
 
@@ -17,10 +17,10 @@ namespace DriverNG
 
         virtual ~BasicPatch() noexcept = default;
 
-        virtual std::string_view GetName() const = 0;
+        virtual const char* GetName() const = 0;
         virtual bool Apply(const ModPack& modules) { m_applied = true; return true; }
         virtual void Revert(const ModPack& modules) { m_applied = false; return; }
 
-        [[nodiscard]] bool IsApplied() const { return m_applied; }
+        bool IsApplied() const { return m_applied; }
     };
 }

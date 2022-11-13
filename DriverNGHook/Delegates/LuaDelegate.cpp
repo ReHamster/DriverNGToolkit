@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "Delegates/LuaDelegate.h"
 #include "UI/DebugTools.h"
+#include "IInputDelegate.h"
 
 #include "Logger.h"
 
@@ -13,6 +14,7 @@
 #include <sol_imgui/sol_imgui.h>
 #include <imgui_impl_dx9.h>
 #include <imgui_impl_win32.h>
+
 
 class LuaAsyncQueue
 {
@@ -125,7 +127,8 @@ namespace DriverNG
 
 	namespace Globals
 	{
-		extern std::unique_ptr<DebugTools>	g_pDebugTools;
+		extern std::unique_ptr<DebugTools>		g_pDebugTools;
+		extern std::unique_ptr<IInputDelegate>	g_pInputDelegate;
 
 		extern IDirect3DDevice9*			g_d3dDevice;
 		extern HWND							g_focusWindow;
@@ -287,15 +290,16 @@ namespace DriverNG
 
 	void LuaDelegate::EndRender()
 	{
+		bool showMouseCursor = false;
+
 		if (Globals::g_pDebugTools)
 		{
-			const bool isDebugToolsVisible = Globals::g_pDebugTools->IsVisible();
-
+			showMouseCursor = showMouseCursor || Globals::g_pDebugTools->IsVisible();
 			Globals::g_pDebugTools->Update();
-
-			ImGuiIO& io = ImGui::GetIO();
-			io.MouseDrawCursor = isDebugToolsVisible;
 		}
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseDrawCursor = showMouseCursor || Globals::g_pInputDelegate->isGameInputBlocked();
 
 		ImGui::EndFrame();
 		ImGui::Render();

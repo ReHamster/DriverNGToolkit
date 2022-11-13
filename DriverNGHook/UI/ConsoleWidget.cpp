@@ -182,7 +182,7 @@ namespace DriverNG
 		{
 			const auto second = acpText.find_first_of('\n', first);
 
-			if (second == std::string_view::npos)
+			if (second == std::string::npos)
 			{
 				m_outputLines.emplace_back(acpText.substr(first));
 				break;
