@@ -2,6 +2,7 @@
 #include "Delegates/LuaDelegate.h"
 #include "UI/DebugTools.h"
 #include "IInputDelegate.h"
+#include "CrashHandlerReporter.h"
 
 #include "Logger.h"
 
@@ -118,8 +119,15 @@ LuaAsyncQueue g_luaAsyncQueue;
 
 //----------------------------------------------------------------------
 
+namespace ReHamster
+{
+	extern ReHamster::CrashHandlerReporter crashHandlerReporter;
+}
+
 namespace DriverNG
 {	
+
+
 	namespace Consts
 	{
 		static const std::string luaScriptsPath = "plugins/DriverNGHook/scripts/";
@@ -166,6 +174,10 @@ namespace DriverNG
         if (!instance)
         {
             instance = new LuaDelegate();
+
+			ReHamster::crashHandlerReporter.AddCrashFunc([]() {
+				instance->PrintLuaStackTrace();
+			});
         }
 
         return *instance;
@@ -396,4 +408,41 @@ namespace DriverNG
     {
         return m_callLuaFunc;
     }
+
+	void LuaDelegate::PrintLuaStackTrace()
+	{
+		if (!m_gameState)
+			return;
+
+		lua_State* L = m_gameState;
+		lua_Debug ar;
+		int depth = 0;
+
+		Msg("\nLua stack trace:\n");
+
+		while (lua_getstack(L, depth, &ar))
+		{
+			int status = lua_getinfo(L, "Sln", &ar);
+			assert(status);
+
+			Msg("\t %s:", ar.short_src);
+			if (ar.currentline > 0)
+				Msg("%d:", ar.currentline);
+			if (*ar.namewhat != '\0')  /* is there a name? */
+				Msg(" in function '%s'", ar.name);
+			else
+			{
+				if (*ar.what == 'm')  /* main? */
+					Msg(" in main chunk");
+				else if (*ar.what == 'C' || *ar.what == 't')
+					Msg(" ?");  /* C function or tail call */
+				else
+					Msg(" in function <%s:%d>",
+						ar.short_src, ar.linedefined);
+			}
+			Msg("\n");
+			depth++;
+		}
+		Msg("\n");
+	}
 };

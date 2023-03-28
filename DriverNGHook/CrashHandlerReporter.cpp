@@ -3,7 +3,9 @@
 #include <DbgHelp.h>
 #include "Logger.h"
 
-bool isExceptionRequierMiniDump(EXCEPTION_POINTERS* frame)
+static std::vector<ReHamster::CrashFunc> s_crashFuncs;
+
+static bool isExceptionRequierMiniDump(EXCEPTION_POINTERS* frame)
 {
     if (frame->ExceptionRecord->ExceptionCode == EXCEPTION_BREAKPOINT  ||
         frame->ExceptionRecord->ExceptionCode == EXCEPTION_SINGLE_STEP)
@@ -13,7 +15,7 @@ bool isExceptionRequierMiniDump(EXCEPTION_POINTERS* frame)
     return true;
 }
 
-void WriteMiniDump(EXCEPTION_POINTERS* exception = nullptr)
+static void WriteMiniDump(EXCEPTION_POINTERS* exception = nullptr)
 {
     //
     //	Credits https://stackoverflow.com/questions/5028781/how-to-write-a-sample-code-that-will-crash-and-produce-dump-file
@@ -57,7 +59,7 @@ void WriteMiniDump(EXCEPTION_POINTERS* exception = nullptr)
     CloseHandle(hFile);
 }
 
-void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
+static void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
 {
     MessageBox(
         NULL,
@@ -84,21 +86,22 @@ void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
     MsgError("             ESP : 0x%x\n", exceptionInfoFrame->ContextRecord->Esp);
     MsgError("******************************************************************************\n");
 
+    // Extra stuff
+    for (auto& func : s_crashFuncs)
+    {
+        func();
+    }
+
     WriteMiniDump(exceptionInfoFrame);
 }
 
-LONG WINAPI ExceptionFilterWin32(EXCEPTION_POINTERS* exceptionInfoFrame)
+static LONG WINAPI ExceptionFilterWin32(EXCEPTION_POINTERS* exceptionInfoFrame)
 {
-    if (isExceptionRequierMiniDump(exceptionInfoFrame))
+    if (exceptionInfoFrame->ExceptionRecord->ExceptionCode < 0x80000000)
     {
-        NotifyAboutException(exceptionInfoFrame);
+        return EXCEPTION_CONTINUE_EXECUTION;
     }
 
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
-LONG WINAPI VectoredExceptionHandlerWin32(EXCEPTION_POINTERS* exceptionInfoFrame)
-{
     if (isExceptionRequierMiniDump(exceptionInfoFrame))
     {
         NotifyAboutException(exceptionInfoFrame);
@@ -126,18 +129,16 @@ namespace ReHamster
     void CrashHandlerReporter::Install()
     {
         _set_purecall_handler(PureCallhandler);
-        m_prevHandler = reinterpret_cast<std::intptr_t>(SetUnhandledExceptionFilter(ExceptionFilterWin32));
+        m_vectored = reinterpret_cast<std::intptr_t>(AddVectoredExceptionHandler(0UL, ExceptionFilterWin32));
+    }
+
+    void CrashHandlerReporter::AddCrashFunc(CrashFunc onCrash)
+    {
+        s_crashFuncs.push_back(std::move(onCrash));
     }
 
     CrashHandlerReporter::~CrashHandlerReporter()
     {
-        if (m_prevHandler == 0)
-            return;
-
-        SetUnhandledExceptionFilter(reinterpret_cast<LPTOP_LEVEL_EXCEPTION_FILTER>(m_prevHandler));
-        if (!AddVectoredExceptionHandler(0UL, VectoredExceptionHandlerWin32))
-        {
-            MsgWarning("AddVectoredExceptionHandler failed!\n");
-        }
+        RemoveVectoredContinueHandler(reinterpret_cast<PVOID>(m_vectored));
     }
 }

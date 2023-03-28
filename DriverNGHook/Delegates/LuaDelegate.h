@@ -26,6 +26,8 @@ namespace DriverNG
 
         CallLuaFunction_t                   GetCallLuaFunction() override;
 
+        void                                PrintLuaStackTrace();
+
     protected:
 
         bool IsValidLuaState() const;
