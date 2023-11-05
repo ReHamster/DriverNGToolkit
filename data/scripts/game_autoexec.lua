@@ -122,11 +122,20 @@ end
 
 -- called from C++
 local function hookImGui_Update()
+	local needsInputBlocking = false
 	for k,upd in pairs(driverNGHook.imGuiFuncs) do
 		if upd.displayAlways or driverNGHook.gamePaused then
-			xpcall(upd.func, hookImGui_errorHandler)
+			local ret = nil
+			xpcall(function() 
+				ret = upd.func()
+			end, hookImGui_errorHandler)
+
+			if type(ret) == "boolean" and ret == true then
+				needsInputBlocking = true
+			end
 		end
 	end
+	return needsInputBlocking
 end
 
 -------------------------------------------------------------------------------------------
@@ -212,3 +221,5 @@ local function check(tab, name, value)
 end
 
 setmetatable(_G, {__index=ReadOnly, __newindex=check})
+
+dofile(DNGHookScriptPath.. "driverNGHookMenu.lua")
