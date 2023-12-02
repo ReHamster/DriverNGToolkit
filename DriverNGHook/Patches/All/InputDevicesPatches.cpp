@@ -198,24 +198,28 @@ namespace DriverNG
     {
         if (auto process = modules.process.lock())
         {
-            // Do not revert this patch!
-            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kRegisterClassAAddr, kRegisterClassAPatchSize))
+            const char* cmd = GetCommandLineA();
+            if (strstr(cmd, "-tools") != nullptr)
             {
-                MsgError("Failed to cleanup memory");
-                return false;
-            }
+                // Do not revert this patch!
+                if (!HF::Hook::FillMemoryByNOPs(process, Consts::kRegisterClassAAddr, kRegisterClassAPatchSize))
+                {
+                    MsgError("Failed to cleanup memory");
+                    return false;
+                }
 
-            m_registerClassAHook = HF::Hook::HookFunction<ATOM(__stdcall*)(WNDCLASSA*), kRegisterClassAPatchSize>(
+                m_registerClassAHook = HF::Hook::HookFunction<ATOM(__stdcall*)(WNDCLASSA*), kRegisterClassAPatchSize>(
                     process,
                     Consts::kRegisterClassAAddr,
                     &Callbacks::RegisterClassA_Hooked,
                     {},
                     {});
 
-            if (!m_registerClassAHook->setup())
-            {
-				MsgError("Failed to setup patch to RegisterClassA!\n");
-                return false;
+                if (!m_registerClassAHook->setup())
+                {
+                    MsgError("Failed to setup patch to RegisterClassA!\n");
+                    return false;
+                }
             }
 
         	// hook DirectInput
