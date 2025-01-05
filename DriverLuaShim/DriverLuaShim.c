@@ -44,6 +44,7 @@ static uintptr_t kluaIndex2adrAddr = 0x005E91C0;	// for some reason it crashes g
 static uintptr_t kluaToLStringAddr = 0x005F2D20;
 static uintptr_t kluaVToNumberAddr = 0x005ED760;
 static uintptr_t kluaToBooleanAddr = 0x005E94E0;
+static uintptr_t kluaToUserdataAddr = 0x005E9540;
 static uintptr_t kluaCreateTableAddr = 0x005F2EA0;
 static uintptr_t kluaRawSetAddr = 0x005EDA20;
 
@@ -429,12 +430,9 @@ LUA_API const TValue* luaV_tonumber(const TValue* obj, TValue* n)
 // direct reimpl
 LUA_API void* lua_touserdata(lua_State* L, int idx)
 {
-	StkId o = index2adr(L, idx);
-	switch (ttype(o)) {
-	case LUA_TUSERDATA: return (rawuvalue(o) + 1);
-	case LUA_TLIGHTUSERDATA: return pvalue(o);
-	default: return NULL;
-	}
+	typedef void* (*lua_touserdata_t)(lua_State*, int);
+	return ((lua_touserdata_t)kluaToUserdataAddr)(L, idx);
+	
 }
 
 // direct reimpl
