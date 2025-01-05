@@ -91,7 +91,7 @@ end
 
 local function hookImGui_errorHandler( errobj )
 	print(debug.traceback())
-	print("error in ImGui update function - ", errobj)
+	print("error in ImGui update function - ", tostring(errobj))
 	return false
 end
 
@@ -124,7 +124,7 @@ end
 local function hookImGui_Update()
 	local needsInputBlocking = false
 	for k,upd in pairs(driverNGHook.imGuiFuncs) do
-		if upd.displayAlways or driverNGHook.gamePaused then
+		if upd.displayAlways or driverNGHook.gamePaused or not driverNGHook.gameLaunched then
 			local ret = nil
 			xpcall(function() 
 				ret = upd.func()

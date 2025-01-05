@@ -1,5 +1,6 @@
 project_vs**/
 bin/
+build/
 *.idea
 *.vscode
 *.vs

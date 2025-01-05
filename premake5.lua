@@ -44,25 +44,32 @@ include "src_dependency/premake5.lua"
 
 group "Main"
 
+project "DriverLuaShim"
+    kind "StaticLib"
+	language "C"
+    files {
+        "DriverLuaShim/**",
+	}
+	uses {
+		"lua"
+	}
+
 project "DriverNGHook"
     kind "SharedLib"
 	targetextension ".asi"	-- can be used with Ultimate ASI loader
-
+    uses {
+		"HF", 
+		"lua", "luafilesystem",
+		"imgui", "imgui_lua"
+	}
     files {
         "DriverNGHook/**.cpp",
         "DriverNGHook/**.h",
 	}
-
+	links {
+		"DriverLuaShim", "d3d9", "dinput8", "dxguid"
+	}
 	includedirs {
 		"DriverNGHook"
 	}
-
-	links {
-		"d3d9", "dinput8", "dxguid"
-	}
-
-    uses { 
-		"HF", 
-		"lua", "luafilesystem", "sol2",
-		"imgui"
-	}
+	

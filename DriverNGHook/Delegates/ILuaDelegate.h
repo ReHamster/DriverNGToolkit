@@ -1,7 +1,6 @@
 #pragma once
 #include <functional>
 #include <string>
-#include <sol/sol.hpp>
 
 struct lua_State;
 
@@ -27,8 +26,8 @@ namespace DriverNG
 
         virtual bool IsDeveloperConsoleAllowed() = 0;
 
-        virtual sol::protected_function_result ExecuteString(const std::string& code) = 0;
-        virtual sol::protected_function_result ExecuteFile(const std::string& filename) = 0;
+        virtual void ExecuteString(const std::string& code) = 0;
+        virtual void ExecuteFile(const std::string& filename) = 0;
 
         virtual int Push(std::function<int()> f) = 0;
 

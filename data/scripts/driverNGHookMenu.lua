@@ -1,4 +1,5 @@
 local menuShown = false
+documentationWindowShown = false
 
 local function dngHookMenu()
     local toggle = ImGui.IsKeyPressed(0x71) -- VK_F2
@@ -34,7 +35,11 @@ local function dngHookMenu()
         end
 		
 		if ImGui.BeginMenu("Help") then
-			if ImGui.MenuItem("API documentation") then
+			if ImGui.MenuItem("API documentation", nil, documentationWindowShown) then
+				print("Yay!")
+				if DocsMenu == nil then
+					DocsMenu = dofile(DNGHookScriptPath.. "driverNGDocsUtil.lua")
+				end
 				documentationWindowShown = not documentationWindowShown
 			end
 			ImGui.EndMenu()

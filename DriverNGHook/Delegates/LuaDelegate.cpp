@@ -7,15 +7,23 @@
 #include "Logger.h"
 
 #include <lfs.h>
-#include "lstate.h"
-
-#define SOL_IMGUI_ENABLE_INPUT_FUNCTIONS
+#include <fstream>
 
 #include <imgui.h>
-#include <sol_imgui/sol_imgui.h>
+#include <imgui_lua_bindings.h>
 #include <imgui_impl_dx9.h>
 #include <imgui_impl_win32.h>
 
+extern "C"
+{
+#include "lua.h"
+#include "lstate.h"
+
+// extern
+LUALIB_API int luaL_loadbuffer(lua_State* L, const char* buff, size_t size, const char* name);
+}
+
+#define SOL_IMGUI_ENABLE_INPUT_FUNCTIONS
 
 class LuaAsyncQueue
 {
@@ -126,8 +134,6 @@ namespace ReHamster
 
 namespace DriverNG
 {	
-
-
 	namespace Consts
 	{
 		static const std::string luaScriptsPath = "plugins/DriverNGHook/scripts/";
@@ -144,29 +150,75 @@ namespace DriverNG
 		extern volatile bool				g_dataDrawn;
 	}
 
-	// TODO: proper exception handling for Lua funcs!
-	template <typename ...Args>
-	static sol::protected_function_result TryLuaFunction(sol::function aFunc, Args... aArgs)
+	static std::string GetPrintArgsString(lua_State* L)
 	{
-		sol::protected_function_result result{ };
-		if (aFunc)
+		const int n = lua_gettop(L);
+
+		lua_getglobal(L, "tostring");
+
+		std::string out;
+		for (int i = 1; i <= n; i++)
 		{
-			try
-			{
-				result = aFunc(aArgs...);
-			}
-			catch (std::exception& e)
-			{
-				MsgError("%s\n", e.what());
-			}
-			if (!result.valid())
-			{
-				const sol::error cError = result;
-				MsgError("%s\n",cError.what());
-			}
+			lua_pushvalue(L, -1);  // function to be called
+			lua_pushvalue(L, i);   // value to print
+			lua_call(L, 1, 1);
+
+			if (i > 1) out += ' ';
+			size_t l;
+			const char* s = lua_tostring(L, -1);  // get result
+			out += s ? s : "(null)";
+			lua_pop(L, 1);
 		}
-		return result;
+		return out;
 	}
+
+	static int LuaPrintFunc(lua_State* L)
+	{
+		std::string printArgs = GetPrintArgsString(L);
+		MsgInfo("[Lua] ");
+		MsgInfo(printArgs.c_str());
+		MsgInfo("\n");
+		
+		if(Globals::g_pDebugTools)
+			Globals::g_pDebugTools->LogGameToConsole(printArgs.c_str());
+		return 0;
+	}
+
+	static bool LuaCheckError(int status, lua_State* L, const char* prefix)
+	{
+		if (status == 0)
+			return true;
+
+		const int errIdx = lua_gettop(L);
+		const char* errorStr = lua_tolstring(L, errIdx, nullptr);
+		MsgWarning("%s: %s\n", prefix, errorStr);
+		lua_pop(L, 1);
+		return false;
+	}
+
+	// TODO: proper exception handling for Lua funcs!
+	//template <typename ...Args>
+	//static sol::protected_function_result TryLuaFunction(sol::function aFunc, Args... aArgs)
+	//{
+	//	sol::protected_function_result result{ };
+	//	if (aFunc)
+	//	{
+	//		try
+	//		{
+	//			result = aFunc(aArgs...);
+	//		}
+	//		catch (std::exception& e)
+	//		{
+	//			MsgError("%s\n", e.what());
+	//		}
+	//		if (!result.valid())
+	//		{
+	//			const sol::error cError = result;
+	//			MsgError("%s\n",cError.what());
+	//		}
+	//	}
+	//	return result;
+	//}
 
     ILuaDelegate& ILuaDelegate::GetInstance()
     {
@@ -197,9 +249,9 @@ namespace DriverNG
 		m_gameState = gameState;
 
 		luaopen_lfs(m_gameState);
-		sol::state_view sv(m_gameState);
 
-		sol_ImGui::InitBindings(sv);
+		imGuilState = m_gameState;
+		LoadImguiBindings();
 
 		const char* cmd = GetCommandLineA();
 		if (strstr(cmd, "-tools") != nullptr)
@@ -207,87 +259,52 @@ namespace DriverNG
 			m_allowDeveloperConsole = true;
 		}
 
-		// install our print function to the game
-		sv["print"] = [](sol::variadic_args args, sol::this_state aState)
-		{
-			std::ostringstream oss;
-			sol::state_view s(aState);
-			auto toString = s["tostring"];
-
-			MsgInfo("[Lua] ");
-			
-			for (auto it = args.cbegin(); it != args.cend(); ++it)
-			{
-				if (it != args.cbegin())
-				{
-					oss << " ";
-					MsgInfo(" ");
-				}
-
-				std::string str = ((*it).get_type() == sol::type::string) ? (*it).get<std::string>() : toString((*it).get<sol::object>());
-
-				MsgInfo(str.c_str());
-				oss << str;
-			}
-			MsgInfo("\n");
-
-			if(Globals::g_pDebugTools)
-				Globals::g_pDebugTools->LogGameToConsole(oss.str());
-		};
+		lua_pushcfunction(m_gameState, LuaPrintFunc);
+		lua_setglobal(m_gameState, "print");
 
 		// set folder
-		sv["DNGHookScriptPath"] = Consts::luaScriptsPath;
+		lua_pushstring(m_gameState, Consts::luaScriptsPath.c_str());
+		lua_setglobal(m_gameState, "DNGHookScriptPath");
 
-		if (firstTimeInit)
-		{
-			// init other lua state
-			m_luaState.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
-			//sol_ImGui::InitBindings(m_luaState);
+		//if (firstTimeInit)
+		//{
+		//	// init other lua state
+		//	m_luaState.open_libraries(sol::lib::base, sol::lib::string, sol::lib::io, sol::lib::math, sol::lib::package, sol::lib::os, sol::lib::table);
+		//	//sol_ImGui::InitBindings(m_luaState);
+		//
+		//	m_luaState["allowCustomGameScripts"] = [this](bool enable)
+		//	{
+		//		if (enable)
+		//		{
+		//			const char* messageStr = "Custom game scripts are allowed\n";
+		//			MsgInfo(messageStr);
+		//
+		//			if (Globals::g_pDebugTools)
+		//				Globals::g_pDebugTools->LogGameToConsole(messageStr);
+		//		}
+		//
+		//		m_allowCustomGameScripts = enable;
+		//	};
+		//
+		//	// Driver NG hook internals
+		//	{
+		//		m_luaState.script_file(Consts::luaScriptsPath + "autoexec.lua");
+		//	}
+		//}
 
-			m_luaState["allowCustomGameScripts"] = [this](bool enable)
-			{
-				if (enable)
-				{
-					const char* messageStr = "Custom game scripts are allowed\n";
-					MsgInfo(messageStr);
-
-					if (Globals::g_pDebugTools)
-						Globals::g_pDebugTools->LogGameToConsole(messageStr);
-				}
-
-				m_allowCustomGameScripts = enable;
-			};
-
-			// Driver NG hook internals
-			{
-				m_luaState.script_file(Consts::luaScriptsPath + "autoexec.lua");
-			}
-		}
+		// atm true
+		m_allowCustomGameScripts = true;
 
 		// little game hooks to allow console stuff
 		if (m_allowDeveloperConsole)
 		{
-			try
-			{
-				sv.do_file(Consts::luaScriptsPath + "driverNGConsole.lua");
-			}
-			catch (sol::error& err)
-			{
-				MsgWarning("driverNGConsole.lua failed to load\n%s\n", err.what());
-			}
+			ExecuteFile(Consts::luaScriptsPath + "driverNGConsole.lua");
 		}
 
 		// init game Lua hooks
 		if (m_allowCustomGameScripts && m_callLuaFunc)
 		{
-			try
-			{
-				sv.do_file(Consts::luaScriptsPath + "game_autoexec.lua");
-			}
-			catch (sol::error& err)
-			{
-				MsgWarning("game_autoexec.lua failed to load\n%s\n", err.what());
-			}
+			ExecuteFile(Consts::luaScriptsPath + "game_autoexec.lua");
 		}
     }
 		
@@ -347,25 +364,25 @@ namespace DriverNG
 		if (!IsValidLuaState())
 			return false;
 
-		sol::state_view state(m_gameState);
-
-		// for now we using Lua
-		sol::table networkLibTable = state["Network"];
-
-		if (!networkLibTable.valid())
-			return false;
-
-		sol::function getConnectionFn = networkLibTable["getConnection"];
-
-		if(!getConnectionFn.valid())
-			return false;
-
-		auto result = TryLuaFunction(getConnectionFn);
-		if (result.valid())
-		{
-			std::string value = result;
-			return value == "Online";
-		}
+		//sol::state_view state(m_gameState);
+		//
+		//// for now we using Lua
+		//sol::table networkLibTable = state["Network"];
+		//
+		//if (!networkLibTable.valid())
+		//	return false;
+		//
+		//sol::function getConnectionFn = networkLibTable["getConnection"];
+		//
+		//if(!getConnectionFn.valid())
+		//	return false;
+		//
+		//auto result = TryLuaFunction(getConnectionFn);
+		//if (result.valid())
+		//{
+		//	std::string value = result;
+		//	return value == "Online";
+		//}
 
 		return false;
 	}
@@ -375,28 +392,42 @@ namespace DriverNG
 		return m_allowDeveloperConsole;
 	}
 
-	sol::protected_function_result LuaDelegate::ExecuteString(const std::string& code)
+	void LuaDelegate::ExecuteString(const std::string& code)
 	{
 		if (!IsValidLuaState())
-			return sol::protected_function_result();
+			return;
 
 		if (IsOnlineGame() && !m_allowCustomGameScripts)
-			return sol::protected_function_result();
+			return;
 
-		sol::state_view state(m_gameState);
-		return state.do_string(code);
+		const int bufStatus = luaL_loadbuffer(m_gameState, code.c_str(), code.size(), "ExecuteString");
+		if (!LuaCheckError(bufStatus, m_gameState, "Lua parse error"))
+			return;
+
+		const int result = lua_pcall(m_gameState, 0, LUA_MULTRET, 0);
+		if (!LuaCheckError(result, m_gameState, "Script error"))
+			return;
 	}
 
-	sol::protected_function_result LuaDelegate::ExecuteFile(const std::string& filename)
+	void LuaDelegate::ExecuteFile(const std::string& filename)
 	{
 		if (!IsValidLuaState())
-			return sol::protected_function_result();
+			return;
 
 		if (IsOnlineGame() && !m_allowCustomGameScripts)
-			return sol::protected_function_result();
+			return;
 
-		sol::state_view state(m_gameState);
-		return state.do_file(filename);
+		// load file
+		std::ifstream fileStream(filename);
+		std::string luaSourceStr((std::istreambuf_iterator<char>(fileStream)), std::istreambuf_iterator<char>());
+
+		const int bufStatus = luaL_loadbuffer(m_gameState, luaSourceStr.c_str(), luaSourceStr.size(), filename.c_str());
+		if (!LuaCheckError(bufStatus, m_gameState, "Lua parse error"))
+			return;
+
+		const int result = lua_pcall(m_gameState, 0, LUA_MULTRET, 0);
+		if (!LuaCheckError(result, m_gameState, "Script error"))
+			return;
 	}
 
 	int LuaDelegate::Push(std::function<int()> f)
@@ -446,3 +477,4 @@ namespace DriverNG
 		Msg("\n");
 	}
 };
+

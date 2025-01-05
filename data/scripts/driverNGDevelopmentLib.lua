@@ -73,10 +73,12 @@ local function DrawDevelopment()
 	if #Development.TextList == 0 then
 		return
 	end
+	
+	local ImGuiWindowFlags = ImGui.constant.WindowFlags
+	
+	local flags = ImGuiWindowFlags.NoTitleBar + ImGuiWindowFlags.NoResize + ImGuiWindowFlags.NoBringToFrontOnFocus
 
-	if ImGui.Begin("DevelopmentFrame", true, ImGuiWindowFlags.NoTitleBar + ImGuiWindowFlags.NoResize +
-		ImGuiWindowFlags.NoMove + ImGuiInputTextFlags.NoHorizontalScroll +
-		ImGuiWindowFlags.NoSavedSettings + ImGuiColorEditFlags.NoInputs + ImGuiWindowFlags.NoBringToFrontOnFocus) then
+	if ImGui.Begin("DevelopmentFrame", true, flags) then
 		
 		ImGui.SetWindowSize(1024, 1024)
 		ImGui.SetWindowPos(0, 24)

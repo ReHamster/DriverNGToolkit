@@ -11,6 +11,7 @@ project "imgui"
         "imgui/imgui.cpp",
         "imgui/imgui.h",
         "imgui/imgui_draw.cpp",
+        "imgui/imgui_demo.cpp",
         "imgui/imstb_truetype.h",
         "imgui/imstb_textedit.h",
         "imgui/imgui_tables.cpp",
@@ -34,23 +35,10 @@ usage "imgui"
     }
     links "imgui"
 
--- Lua and stuff
-project "lua"
-	kind "StaticLib"
-	files {
-		"lua/src/*.c"
-	}
-	
-	removefiles {
-		"lua/src/lua.c",
-	}
-
 usage "lua"
 	includedirs {
 		"lua/src",
 	}
-
-	links { "lua" }
 
 project "luafilesystem"
     kind "StaticLib"
@@ -63,10 +51,19 @@ usage "luafilesystem"
 	includedirs {
 		"luafilesystem/src",
 	}
-
 	links { "luafilesystem" }
 
-usage "sol2"
-	includedirs {
-		"sol2/include",
+project "imgui_lua"
+	kind "StaticLib"
+	uses { "imgui", "lua" }
+	files {
+		"imgui_lua/**.h",
+		"imgui_lua/**.cpp",
+		"imgui_lua/**.inl"
 	}
+
+usage "imgui_lua"
+	includedirs {
+		"imgui_lua",
+	}
+	links "imgui_lua"

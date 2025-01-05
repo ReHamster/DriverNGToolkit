@@ -1,5 +1,4 @@
 dofile(DNGHookScriptPath.. "driverNGUtil.lua")
-dofile(DNGHookScriptPath.. "driverNGDocsUtil.lua")
 
 -- this is called from the hook via CallLuaFunction
 function driverNGHook_EvalHelper(luaExprStr)	
