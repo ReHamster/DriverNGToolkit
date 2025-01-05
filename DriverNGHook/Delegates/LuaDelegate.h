@@ -12,7 +12,7 @@ namespace DriverNG
         void      OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc) override;
         void      OnDeleted() override;
 
-        void      DoCommands() override;
+        void      DoCommands(lua_State* gameState) override;
         bool      IsOnlineGame() override;
 
 		void	  BeginRender() override;
@@ -31,7 +31,7 @@ namespace DriverNG
 
     protected:
 
-        bool IsValidLuaState() const;
+        bool IsValidLuaState(lua_State* gameState) const;
 
         void InitializeGameDevelopmentLib();
 

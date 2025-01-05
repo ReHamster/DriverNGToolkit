@@ -334,20 +334,17 @@ namespace DriverNG
 		ImGui::Render();
 	}
 
-	bool LuaDelegate::IsValidLuaState() const
+	bool LuaDelegate::IsValidLuaState(lua_State* gameState) const
 	{
-		if (!m_gameState)
-			return false;
-
-		if (!m_gameState->l_G)
+		if (!m_gameState || gameState && m_gameState != gameState)
 			return false;
 
 		return true;
 	}
 
-    void LuaDelegate::DoCommands()
+    void LuaDelegate::DoCommands(lua_State* gameState)
     {
-		if (!IsValidLuaState())
+		if (!IsValidLuaState(gameState))
 			return;
 
 		if (!m_allowCustomGameScripts)
@@ -361,7 +358,7 @@ namespace DriverNG
 
 	bool LuaDelegate::IsOnlineGame()
 	{
-		if (!IsValidLuaState())
+		if (!IsValidLuaState(nullptr))
 			return false;
 
 		//sol::state_view state(m_gameState);
@@ -394,7 +391,7 @@ namespace DriverNG
 
 	void LuaDelegate::ExecuteString(const std::string& code)
 	{
-		if (!IsValidLuaState())
+		if (!IsValidLuaState(nullptr))
 			return;
 
 		if (IsOnlineGame() && !m_allowCustomGameScripts)
@@ -411,7 +408,7 @@ namespace DriverNG
 
 	void LuaDelegate::ExecuteFile(const std::string& filename)
 	{
-		if (!IsValidLuaState())
+		if (!IsValidLuaState(nullptr))
 			return;
 
 		if (IsOnlineGame() && !m_allowCustomGameScripts)

@@ -17,7 +17,7 @@ namespace DriverNG
         virtual void OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc) = 0;
         virtual void  OnDeleted() = 0;
 
-        virtual void DoCommands() = 0;
+        virtual void DoCommands(lua_State* gameState) = 0;
 
 		virtual void BeginRender() = 0;
 		virtual void EndRender() = 0;
