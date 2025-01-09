@@ -2,13 +2,20 @@
 -- DriverNG Game layer
 --------------------------------------------
 
+dofile(DNGHookScriptPath.. "struct.lua")
+
+-- make ImGui flags accessible 
+for key, flagsTable in pairs(ImGui.constant) do
+	_G["ImGui"..key] = flagsTable
+end
+
 driverNGHook = {
 	gamePaused = false,
 	gameLaunched = false
 }
 
 UserLuaMediaPath = MediaPath .. "UserLuaScripts\\"
---LuaMediaPath = MediaPath .. "LuaScripts\\"
+UserDocumentsPath = "HDD:"
 
 local function diskFileExists(filename)
 	local f = io.open(filename, "r")
@@ -168,6 +175,7 @@ end
 local function overrideGameLauncher()
 	dofile(DNGHookScriptPath.. "driverNGDevelopmentLib.lua")
 	dofile(DNGHookScriptPath.. "driverNGGameLauncher.lua")
+	dofile(DNGHookScriptPath.. "driverNGProfileSettings.lua")
 	removeUserUpdateFunction("overrideGameLauncher")
 
 	addUserUpdateFunction("userBootstrapper", checkLoadBootstrapper, 120)
@@ -188,10 +196,24 @@ local function hookLaunchScripts()
 	_launchScripts()
 end
 
+local _addUserUpdateFunction = nil
+
+local function addUserUpdateFunctionHook(name, func, stepRate, delayUpdate)
+	local errorHandler = function( errobj )
+		print(debug.traceback())
+		print("Error in user update", name, ": ", tostring(errobj))
+		return false
+	end
+
+	local safeFunc = function() xpcall(func, errorHandler) end
+	_addUserUpdateFunction(name, safeFunc, stepRate, delayUpdate)
+end
+
 local ReadOnly = {
 	open = _open,
 	user_open = _user_open,
 	launchScripts = hookLaunchScripts,
+	addUserUpdateFunction = addUserUpdateFunctionHook,
 	ImGui_RenderUpdate = hookImGui_Update,
 	ImGui_AddUpdateFunction = hookImGui_AddUpdate,
 	ImGui_RemoveUpdateFunction = hookImGui_RemoveUpdate
@@ -204,6 +226,8 @@ local function check(tab, name, value)
 		addUserUpdateFunction("overrideGameLauncher", overrideGameLauncher, 1)
 	elseif name == "launchScripts" then
 		_launchScripts = value
+	elseif name == "addUserUpdateFunction" then
+		_addUserUpdateFunction = value
 	end
 
 	if rawget(ReadOnly, name) then

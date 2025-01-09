@@ -136,7 +136,7 @@ namespace DriverNG
 {	
 	namespace Consts
 	{
-		static const std::string luaScriptsPath = "plugins/DriverNGHook/scripts/";
+		static const std::string luaScriptsPath = "plugins/DriverNGHook/";
 	}
 
 	namespace Globals
