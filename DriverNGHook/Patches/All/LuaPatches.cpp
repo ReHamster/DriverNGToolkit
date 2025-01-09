@@ -5,7 +5,6 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <mutex>
-#include <sol/sol.hpp>
 #include "Delegates/IInputDelegate.h"
 
 namespace DriverNG
@@ -24,6 +23,7 @@ namespace DriverNG
         static constexpr uintptr_t kStepLuaOrigAddress     = 0x005E4A70;
 
         static constexpr uintptr_t ksafe_vsprintfOrigAdress = 0x00903EBA;
+        static constexpr uintptr_t kgameLuaStateAddr = 0x0122B498;
     }
 
     namespace Globals
@@ -57,35 +57,38 @@ namespace DriverNG
             Globals::InitializeLuaStateBindings(state);
         }
 
-        void StepLua_Hooked(lua_State* state, bool paused)
+        void StepLua_Hooked(bool consolePaused)
         {
-            typedef void (*StepLua_t)(lua_State*, bool);
+            typedef void (*StepLua_t)(bool);
             auto origStepLua = (StepLua_t)Consts::kStepLuaOrigAddress;
 
 			{
 				//std::lock_guard g(Globals::g_drawMutex[1]);
-				origStepLua(state, paused);
+				origStepLua(consolePaused);
 			}
 
-			auto callLuaFunc = Globals::g_luaDelegate.GetCallLuaFunction();
+            if (!consolePaused)
+            {
+                auto callLuaFunc = Globals::g_luaDelegate.GetCallLuaFunction();
 
-			if (callLuaFunc && state)
-			{
-				std::lock_guard g(Globals::g_drawMutex[0]);
+                if (callLuaFunc)
+                {
+                    std::lock_guard g(Globals::g_drawMutex[0]);
 
-				Globals::g_dataDrawn = false;
+                    Globals::g_dataDrawn = false;
 
-				Globals::g_luaDelegate.BeginRender();
+                    Globals::g_luaDelegate.BeginRender();
 
-                bool shouldBlockUI = false;
-				callLuaFunc("ImGui_RenderUpdate", ">b", &shouldBlockUI);
-                Globals::g_pInputDelegate->setGameInputBlocked(shouldBlockUI);
+                    bool shouldBlockUI = false;
+                    callLuaFunc("ImGui_RenderUpdate", ">b", &shouldBlockUI);
+                    Globals::g_pInputDelegate->setGameInputBlocked(shouldBlockUI);
 
-				Globals::g_luaDelegate.EndRender();
-			}
+                    Globals::g_luaDelegate.EndRender();
+                }
 
-			// do commands after
-			Globals::g_luaDelegate.DoCommands();
+                // do commands after
+                Globals::g_luaDelegate.DoCommands(*reinterpret_cast<lua_State**>(Consts::kgameLuaStateAddr));
+            }
         }
 
         void DeleteLuaState_Hooked(lua_State* state)
@@ -159,7 +162,7 @@ namespace DriverNG
                 return false;
             }
 
-            m_stepLuaHook = HF::Hook::HookFunction<void(*)(lua_State*, bool), kStepLuaPatchSize>(
+            m_stepLuaHook = HF::Hook::HookFunction<void(*)(bool), kStepLuaPatchSize>(
                 process,
                 Consts::kStepLuaCallAddress,
                 &Callbacks::StepLua_Hooked,
