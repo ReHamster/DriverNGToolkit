@@ -50,7 +50,7 @@ local function CreateCustomSaveData()
 end
 
 local nativeProfileSettings = ProfileSettings
-local CustomProfileSettings = {
+CustomProfileSettings = {
 	customDataLoaded = false,
 	data = CreateCustomSaveData()
 }
@@ -70,7 +70,8 @@ local function TryLoadProfileSettings()
 	end
 	
 	-- load file
-	if localPlayer == nil or localPlayer.name == nil or localPlayer.name:len() == 0 then
+	if DNGUserProfileName == nil then
+		error("old Hook version used")
 		return
 	end
 	
@@ -78,9 +79,9 @@ local function TryLoadProfileSettings()
 	CustomProfileSettings.customDataLoaded = true
 	
 	print("--------- LOAD CUSTOM PROFILE SETTINGS ---------")
-	print("player name ".. localPlayer.name)
+	print("player name ".. DNGUserProfileName)
 	
-	local saveFileName = UserDocumentsPath..localPlayer.name..AUTOSAVE_CUSTOM_PATH
+	local saveFileName = UserDocumentsPath..DNGUserProfileName..AUTOSAVE_CUSTOM_PATH
 	local file = io.open(saveFileName, "rb")
 	if file == nil then
 		print("No custom profile save data found at "..saveFileName)
@@ -91,6 +92,7 @@ local function TryLoadProfileSettings()
 	local sig, version = struct.unpack('c4i', file:read(8))
 	if sig ~= SAVE_SIGNATURE or version ~= SAVE_VERSION then
 		print("Invalid save file "..saveFileName)
+		file:close()
 		return
 	end
 	
@@ -115,6 +117,8 @@ local function TryLoadProfileSettings()
 		print(tostring(err))
 		print(debug.traceback())
 	end)
+	
+	file:close()
 end
 
 local function TrySaveProfileSettings()
@@ -122,7 +126,7 @@ local function TrySaveProfileSettings()
 	
 	CustomProfileSettings.customDataLoaded = true
 	
-	local saveFileName = UserDocumentsPath..localPlayer.name..AUTOSAVE_CUSTOM_PATH
+	local saveFileName = UserDocumentsPath..DNGUserProfileName..AUTOSAVE_CUSTOM_PATH
 	local file = io.open(saveFileName, "wb")
 	if file == nil then
 		print("Cannot store custom profile save data at "..saveFileName)
@@ -148,6 +152,7 @@ local function TrySaveProfileSettings()
 	writeArray(file, data.challengeNew)
 	writeArray(file, data.collectableUnlocked)
 	writeArray(file, data.collectableOwned)
+	file:close()
 end
 
 -- Triggers an autosave (if enabled)
@@ -223,7 +228,7 @@ end
 
 -- PARAM<1,MissionID>Set mission completed
 CustomProfileSettings.SetMissionCompleted = function(missionId)
-	CustomProfileSettings.data.missionAttempted[missionId] = true
+	CustomProfileSettings.data.missionCompleted[missionId] = true
 end
 
 -- PARAM<1,MissionID>Get whether a mission is new or not
