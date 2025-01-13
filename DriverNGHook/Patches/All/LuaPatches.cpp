@@ -22,6 +22,7 @@ namespace DriverNG
         static constexpr uintptr_t kStepLuaCallAddress     = 0x0079B811;     // to the call CState_Main::Step
         static constexpr uintptr_t kStepLuaOrigAddress     = 0x005E4A70;
 
+        static constexpr uintptr_t kGetProfileNameCallAddress = 0x008534C2;
         static constexpr uintptr_t ksafe_vsprintfOrigAdress = 0x00903EBA;
         static constexpr uintptr_t kgameLuaStateAddr = 0x0122B498;
     }
@@ -29,18 +30,11 @@ namespace DriverNG
     namespace Globals
     {
         extern std::unique_ptr<IInputDelegate> g_pInputDelegate;
-		extern std::mutex					g_drawMutex[2];
-		extern volatile bool				g_dataDrawn;
+        static std::string      g_profileName;
+		extern std::mutex		g_drawMutex[2];
+		extern volatile bool	g_dataDrawn;
 
         static ILuaDelegate& g_luaDelegate = ILuaDelegate::GetInstance();
-
-    	static void InitializeLuaStateBindings(lua_State* newState)
-    	{
-    		// report to the game state
-            auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
-
-            g_luaDelegate.OnInitialised(newState, callLuaFunction);
-    	}
     }
 
     namespace Callbacks
@@ -54,7 +48,9 @@ namespace DriverNG
             origOpenScriptLoader(state);
 
             // get the lua state from the address
-            Globals::InitializeLuaStateBindings(state);
+            // report to the game state
+            auto callLuaFunction = (CallLuaFunction_t)Consts::kCallLuaFunctionAddress;
+            Globals::g_luaDelegate.OnInitialised(state, callLuaFunction, Globals::g_profileName.c_str());
         }
 
         void StepLua_Hooked(bool consolePaused)
@@ -123,6 +119,13 @@ namespace DriverNG
 			}
         	
             return ret;
+        }
+
+        const char* GetProfileNameHooked(const void* _this)
+        {
+            const char* profileName = (const char*)_this + 4;
+            Globals::g_profileName = profileName;
+            return profileName;
         }
     }
 
@@ -219,6 +222,27 @@ namespace DriverNG
                 return false;
             }
 
+
+            // Do not revert this patch!
+            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kGetProfileNameCallAddress, kprofileNamePatchSize))
+            {
+                MsgError("Failed to cleanup memory\n");
+                return false;
+            }
+
+            m_getProfileNameHook = HF::Hook::HookFunction<const char*(*)(const void*), kprofileNamePatchSize>(
+                process,
+                Consts::kGetProfileNameCallAddress,
+                &Callbacks::GetProfileNameHooked,
+                { HF::X86::PUSH_ECX },
+                { HF::X86::POP_ECX }
+            );
+
+            if (!m_getProfileNameHook->setup())
+            {
+                MsgError("Failed to setup patch to DeleteLuaState!\n");
+                return false;
+            }
             return BasicPatch::Apply(modules);
         }
 

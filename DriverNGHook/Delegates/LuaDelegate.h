@@ -9,7 +9,7 @@ namespace DriverNG
     class LuaDelegate final : public ILuaDelegate
     {
     public:
-        void      OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc) override;
+        void      OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc, const char* profileName) override;
         void      OnDeleted() override;
 
         void      DoCommands(lua_State* gameState) override;

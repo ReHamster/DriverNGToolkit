@@ -241,7 +241,7 @@ namespace DriverNG
 		m_gameState = nullptr;
 	}
 
-    void LuaDelegate::OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc)
+    void LuaDelegate::OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc, const char* profileName)
 	{
 		bool firstTimeInit = m_gameState == nullptr;
 
@@ -306,6 +306,10 @@ namespace DriverNG
 		{
 			ExecuteFile(Consts::luaScriptsPath + "game_autoexec.lua");
 		}
+
+		// try setting profile name
+		lua_pushstring(m_gameState, profileName);
+		lua_setglobal(m_gameState, "DNGUserProfileName");
     }
 		
 	void LuaDelegate::BeginRender()

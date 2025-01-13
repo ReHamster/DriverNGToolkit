@@ -14,7 +14,7 @@ namespace DriverNG
         static ILuaDelegate& GetInstance();
     	
         virtual ~ILuaDelegate() noexcept = default;
-        virtual void OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc) = 0;
+        virtual void OnInitialised(lua_State* gameState, CallLuaFunction_t callFunc, const char* profileName) = 0;
         virtual void  OnDeleted() = 0;
 
         virtual void DoCommands(lua_State* gameState) = 0;
